@@ -1,8 +1,9 @@
 
 Funciones para obtener:
--Meses del año de la DB "Meses" que mes actual y año actual esten marcados como verdaderos
--Cuentas de DB "Metodos de Pago"
--Los tipos de gasto/ingreso
+✅-Meses del año de la DB "Meses" que mes actual y año actual esten marcados como verdaderos
+✅-Cuentas de DB "Metodos de Pago"
+✅-Los tipos de gasto/ingreso
+✅-Producto Cuota activas
 
 Para rellenar "Producto en Cuotas" ↓
     Si es gasto, agregar boton de Cuota
