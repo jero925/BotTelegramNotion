@@ -10,3 +10,16 @@ Para rellenar "Producto en Cuotas" ↓
     En caso de ser cuota:
     -Trae los productos que todavia estan vigentes de pagar
     -Agrega boton de "Agregar Nuevo"
+    -Poder agregar multiples tipos de ingreso/gasto
+    -Agregar el monto negativo directamente en la asignacion y no cuando voy a insertar el registro
+
+NOTION
+-Funciones genericas
+Ejemplo:
+funcion NotionQuery(dbid, filtros)
+
+cuando la llame paso dbid, filtro = {
+                property: "Activa",
+                checkbox: {
+                    equals: true
+                }
