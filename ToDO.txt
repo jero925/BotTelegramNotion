@@ -6,7 +6,7 @@ Funciones para obtener:
 ✅-Producto Cuota activas
 
 Para rellenar "Producto en Cuotas" ↓
-    Si es gasto, agregar boton de Cuota
+    ✅Si es gasto, agregar boton de Cuota
     En caso de ser cuota:
     -Trae los productos que todavia estan vigentes de pagar
     -Agrega boton de "Agregar Nuevo"

@@ -350,14 +350,18 @@ async function PoblarInputMovimientoNuevo(ctx, movimientoTipoIO, movimientoImage
                 AgregarRegistroNuevo(ctx, datosIngresados)
             } else {
                 ctx.reply('Es un producto en cuotas?', { reply_markup: { inline_keyboard: inlineKeyboard } });
-                bot.action('si', (ctx) => {
-                    ctx.reply('Función en desarrollo...');
+
+                // Usa funciones asincrónicas en el manejador de acciones
+                bot.action('si', async (ctx) => {
+                    const { listaCuotasActivas, cuotasActivasColeccion } = await ObtenerCuotasActivas(opcionesDB.dbCuotas);
+                    ctx.reply(`Cuotas activas:\n${listaCuotasActivas}`);
                 });
 
                 bot.action('no', async (ctx) => {
-                    AgregarRegistroNuevo(ctx, datosIngresados)
+                    await AgregarRegistroNuevo(ctx, datosIngresados); // Añade 'await' aquí también
                 });
             }
+
         });
     } catch (error) {
         console.error("Error:", error.message);
@@ -365,7 +369,6 @@ async function PoblarInputMovimientoNuevo(ctx, movimientoTipoIO, movimientoImage
     }
 
 }
-/* ============================================= TO DO =============================================
 async function ObtenerCuotasActivas(dbid) {
     try {
         const cuotasActivasObtenidas = await notion.databases.query({
@@ -377,14 +380,15 @@ async function ObtenerCuotasActivas(dbid) {
                 }
             }
         });
-
-        const cuotasActivas = cuotasActivasObtenidas.results.map(result => ({
+        let contador = 0
+        const cuotasActivasColeccion = cuotasActivasObtenidas.results.map(result => ({
+            cuotaIndice: contador += 1,
             cuotaId: result.id,
             cuotaNombre: result.properties.Name.title[0].text.content
         }))
-        console.log(cuotasActivas);
+        const listaCuotasActivas = cuotasActivasColeccion.map((cuota) => `${cuota.cuotaIndice}- ${cuota.cuotaNombre}`).join('\n');
+        return { listaCuotasActivas, cuotasActivasColeccion }
     } catch (error) {
         console.error("Error al obtener Cuotas Activas:", error.message);
     }
 };
-*/
