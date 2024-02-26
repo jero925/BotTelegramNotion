@@ -294,10 +294,12 @@ INGRESO_DATA_WIZARD.command('cancelar', (ctx) => {
     return ctx.scene.leave();
 })
 GASTO_DATA_WIZARD.command('cancelar', (ctx) => {
-    reiniciarBot(ctx)
+    ctx.reply('Saliendo de la escena...')
+    return ctx.scene.leave();
 })
 CUOTA_DATA_WIZARD.command('cancelar', (ctx) => {
-    reiniciarBot(ctx)
+    ctx.reply('Saliendo de la escena...')
+    return ctx.scene.leave();
 })
 
 // Función para obtener la fecha actual en formato Notion

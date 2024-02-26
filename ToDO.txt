@@ -12,6 +12,7 @@ Para rellenar "Producto en Cuotas" ↓
     ✅-Agrega boton de "Agregar Nuevo"
     -Poder agregar multiples tipos de ingreso/gasto
     ✅-Agregar el monto negativo directamente en la asignacion y no cuando voy a insertar el registro
+    -Agregar opcion agregar todas las cuotas de este mes
 
 NOTION
 -Funciones genericas
