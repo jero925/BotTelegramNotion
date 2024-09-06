@@ -242,14 +242,65 @@ const CUOTA_DATA_WIZARD = new WizardScene(
     },
 )
 
+const TRAVEL_EXPENSE_WIZARD = new WizardScene(
+    'CREATE_TRAVEL_EXPENSE',
+    // 0
+    async (ctx) => {
+        ctx.reply('Nombre del gasto')
 
+        return ctx.wizard.next();
+    },
+
+    // 1 - Guarda el Nombre, escribe Monto (PARA COMPARTIR CON INGRESO Y GASTO)
+    async (ctx) => {
+        ctx.wizard.state.movimientoNombre = ctx.message.text
+        await ctx.reply(`Monto`)
+
+        return ctx.wizard.next()
+    },
+
+    // 2 - Guarda TipoMovimiento "viaje" y el monto, escribe Cuentas
+    async (ctx) => {
+        ctx.wizard.state.movimientoMonto = parseFloat(ctx.message.text)
+        ctx.wizard.state.movimientoTipoNombre = "Viaje";
+        // movimientoTipoIndice = parseInt(getMovementTypeIndexByName(opcionesDB.dbFlujoPlata, "Viaje"));
+        const resultCuentas = await ObtenerCuentasPagos(opcionesDB.dbMetPago);
+        cuentasPagosColeccion = resultCuentas.cuentasPagosColeccion
+        await ctx.reply(`Cuentas:\n${resultCuentas.listaCuentasPagos}`);
+        await ctx.reply(`Con que se paga?`)
+
+
+        return ctx.wizard.next()
+    },
+
+    // 3 FINAL - Guarda Cuenta, crea REGISTRO
+    async (ctx) => {
+        const movimientoCuentaIndice = parseInt(ctx.message.text - 1);
+        ctx.wizard.state.movimientoCuentaId = cuentasPagosColeccion[movimientoCuentaIndice]?.cuentaId
+        const WizardState = ctx.wizard.state
+        movimientoData = {
+            movimientoTipoIO: opcionesMovimientoTipoIO?.Gasto,
+            movimientoImagen: opcionesMovimientoImagen?.Gasto,
+            movimientoCuotaId: WizardState?.movimientoCuotaId,
+            movimientoNombre: WizardState?.movimientoNombre,
+            movimientoMonto: WizardState?.movimientoMonto,
+            movimientoTipoNombre: WizardState?.movimientoTipoNombre,
+            movimientoCuentaId: WizardState?.movimientoCuentaId,
+            movimientoFechaActual: await ObtenerFechaHoy(),
+            movimientoMesActualId: await ObtenerMesActual(opcionesDB.dbMeses)
+        };
+        // console.log(movimientoData)
+        await AgregarRegistroNuevo(ctx, movimientoData)
+        return ctx.scene.leave();
+    }
+)
 
 session({
     property: 'chatSession',
     getSessionKey: (ctx) => ctx.chat && ctx.chat.id
 })
 
-const stage = new Stage([GASTO_DATA_WIZARD, INGRESO_DATA_WIZARD, CUOTA_DATA_WIZARD], { sessionName: 'chatSession' });
+const stage = new Stage([GASTO_DATA_WIZARD, INGRESO_DATA_WIZARD, CUOTA_DATA_WIZARD, TRAVEL_EXPENSE_WIZARD], { sessionName: 'chatSession' });
 
 bot.use(session()); // to  be precise, session is not a must have for Scenes to work, but it sure is lonely without one
 bot.use(stage.middleware());
@@ -269,6 +320,8 @@ bot.command('gasto', Stage.enter('CREAR_GASTO_NUEVO'))
 bot.command('ingreso', Stage.enter('CREAR_INGRESO_NUEVO'))
 
 bot.command('cuotas', Stage.enter('CREAR_CUOTA_NUEVA'))
+
+bot.command('viaje', Stage.enter('CREATE_TRAVEL_EXPENSE'))
 
 // Escuchar opciones de texto
 bot.hears('🤑 Guita', (ctx) => {
@@ -413,6 +466,25 @@ async function ObtenerTipoGastoIngreso(dbid) {
         console.error("Error al obtener movimiento tipo Notion:", error.message);
     }
 };
+
+async function getMovementTypeIndexByName(dbid, typeName) {
+    try {
+        // Primero, obtenemos la lista de tipos de gasto/ingreso usando la función anterior
+        const { tiposGastoIngresoColeccion } = await ObtenerTipoGastoIngreso(dbid);
+        
+        // Buscamos el tipo que coincida con el nombre que se pasa como parámetro
+        const tipoEncontrado = tiposGastoIngresoColeccion.find(tipo => tipo.tipoGastoNombre.toLowerCase() === typeName.toLowerCase());
+
+        // Si el tipo fue encontrado, retornamos su índice
+        if (tipoEncontrado) {
+            return tipoEncontrado.tipoGastoIndice;
+        } else {
+            throw new Error(`No se encontró un tipo de gasto o ingreso con el nombre: ${typeName}`);
+        }
+    } catch (error) {
+        console.error("Error al obtener movimiento tipo Notion:", error.message);
+    }
+}
 
 async function CrearMovimientoNuevo(dbid, datos) {
     try {
