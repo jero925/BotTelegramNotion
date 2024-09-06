@@ -582,14 +582,31 @@ async function CrearPaginaCuotaNueva(dbid, datosCuota) {
 }
 
 async function ObtenerCuotasActivas(dbid) {
+    today = new Date().toISOString();
     try {
         const cuotasActivasObtenidas = await notion.databases.query({
             database_id: dbid,
             filter: {
-                property: "Activa",
-                checkbox: {
-                    equals: true
-                }
+                "and": [
+                    {
+                        property: "Activa",
+                        checkbox: {
+                            equals: true
+                        }
+                    },
+                    {
+                        property: "Pagada Mes Actual",
+                        checkbox: {
+                            equals: false
+                        }
+                    },
+                    {
+                        property: "Primer cuota",
+                        date: {
+                            before: today
+                        }
+                    }
+                ]
             }
         });
         let contador = 0;
