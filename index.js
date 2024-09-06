@@ -256,6 +256,7 @@ bot.use(stage.middleware());
 
 //Configuracion inicial del bot
 bot.start((ctx) => {
+    // console.log(ctx.update.message.chat.id)
     // Configura opciones del teclado
     const opTecladoInicio = ['🤑 Guita', 'Opción 2', 'Opción 3', 'Opción 4']
     let keyboard = GenerarOpcionesTeclado(opTecladoInicio)
@@ -529,7 +530,7 @@ async function CrearPaginaCuotaNueva(dbid, datosCuota) {
                 database_id: dbid
             },
             properties: {
-                "Monto total": {
+                "Monto Total": {
                     type: "number",
                     number: datosCuota.cuotaMonto
                 },
