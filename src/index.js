@@ -379,7 +379,16 @@ async function AddNewTravelExpense(ctx, properties) {
 
 async function ObtenerCuentasPagos(dbid) {
     try {
-        const cuentasPagosObtenidas = await notion.databases.query({ database_id: dbid });
+        const cuentasPagosObtenidas = await notion.databases.query({ 
+            database_id: dbid,
+            filter:
+            {
+                property: "Tipo",
+                select: {
+                    equals: "Cuenta"
+                }
+            }
+        });
         let contador = 0
         const cuentasPagosColeccion = cuentasPagosObtenidas.results.map(result => ({
             cuentaIndice: contador += 1,
