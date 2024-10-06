@@ -2,8 +2,10 @@
 const { Client } = require('@notionhq/client');
 const { Telegraf, Scenes: { Stage, WizardScene }, session, Composer } = require('telegraf');
 
-const opcionesDB = require('./config/databases.js');
-const { opcionesMovimientoTipoIO, opcionesMovimientoImagen, cuotaImagen } = require('./config/movements.js')
+const opcionesDB = require('../config/databases.js');
+const { opcionesMovimientoTipoIO, opcionesMovimientoImagen, cuotaImagen } = require('../config/movements.js')
+const ObtenerFechaHoy = require('./utils/dates.js')
+const ObtenerMesActual = require('./notion/month.js')
 
 // Crear instancias del bot y el cliente de Notion
 const bot = new Telegraf(process.env.BOT_TOKEN);
@@ -336,28 +338,6 @@ CUOTA_DATA_WIZARD.command('cancelar', (ctx) => {
     return ctx.scene.leave();
 })
 
-// Función para obtener la fecha actual en formato Notion
-function ObtenerFechaHoy() {
-    const fechaActual = new Date();
-
-    // Obtiene componentes de la fecha
-    fechaNotion = formatearFecha(fechaActual)
-    return fechaNotion
-}
-
-function formatearFecha(fechaString) {
-    const fecha = new Date(fechaString)
-    const year = fecha.getFullYear();
-    const month = String(fecha.getMonth() + 1).padStart(2, '0');  // Meses son 0-indexados, por lo que se suma 1
-    const day = String(fecha.getDate()).padStart(2, '0');
-
-    // Formatea la fecha para Notion (Año - Mes - Día)
-    const fechaFormateada = `${year}-${month}-${day}`;
-
-    return fechaFormateada;
-
-}
-
 function GenerarOpcionesTeclado(opciones) {
     var teclado = {
         reply_markup: {
@@ -397,33 +377,7 @@ async function AddNewTravelExpense(ctx, properties) {
     }   
 }
 
-// // Obtiene el mes actual desde Notion
-async function ObtenerMesActual(dbid) {
-    //dbid => dbMeses
-    try {
-        const mesActual = await notion.databases.query({
-            database_id: dbid,
-            filter: {
-                and: [
-                    {
-                        property: "Actual",
-                        checkbox: {
-                            equals: true
-                        }
-                    }
-                ]
-            }
-        });
-        const mesActualId = mesActual.results[0].id
-        return mesActualId
-
-    } catch (error) {
-        console.error("Error al obtener el mes actual desde Notion:", error.message);
-    }
-}
-
 async function ObtenerCuentasPagos(dbid) {
-    //dbid => dbMetPago
     try {
         const cuentasPagosObtenidas = await notion.databases.query({ database_id: dbid });
         let contador = 0
