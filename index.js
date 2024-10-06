@@ -1,41 +1,13 @@
 //Importar Módulos
 const { Client } = require('@notionhq/client');
 const { Telegraf, Scenes: { Stage, WizardScene }, session, Composer } = require('telegraf');
-const dotenv = require('dotenv').config();
 
-// Configuración de la base de datos y opciones
-const opcionesDB = {
-    apiKeyNotion: process.env.NOTION_API_KEY,
-    dbCalendario: process.env.CALENDARIO_DB_ID,
-    dbMetPago: process.env.MET_PAGO_DB_ID,
-    dbMeses: process.env.MESES_DB_ID,
-    dbFlujoPlata: process.env.FLUJOPLATA_DB_ID,
-    dbCuotas: process.env.CUOTAS_DB_ID,
-    dbViaje: process.env.VIAJES_DB_ID,
-    dbGastosViaje: process.env.GASTOS_VIAJES_DB_ID
-}
-// for (const key in opcionesDB) {
-//     if (opcionesDB.hasOwnProperty(key)) {
-//         console.log(`${key}: ${opcionesDB[key]}`);
-//     }
-// }
+const opcionesDB = require('./config/databases.js');
+const { opcionesMovimientoTipoIO, opcionesMovimientoImagen, cuotaImagen } = require('./config/movements.js')
 
 // Crear instancias del bot y el cliente de Notion
 const bot = new Telegraf(process.env.BOT_TOKEN);
 const notion = new Client({ auth: opcionesDB.apiKeyNotion });
-
-// Tipos de movimiento (Ingreso/Gasto) y sus imágenes asociadas
-const opcionesMovimientoTipoIO = {
-    Gasto: 'Gasto',
-    Ingreso: 'Ingreso'
-}
-
-const opcionesMovimientoImagen = {
-    Ingreso: 'https://www.notion.so/icons/upward_green.svg',
-    Gasto: 'https://www.notion.so/icons/downward_red.svg'
-}
-
-const cuotaImagen = 'https://www.notion.so/icons/credit-card_gray.svg'
 
 const INGRESO_DATA_WIZARD = new WizardScene(
     'CREAR_INGRESO_NUEVO',
