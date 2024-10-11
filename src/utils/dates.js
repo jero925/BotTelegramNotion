@@ -19,4 +19,4 @@ function formatDate(fechaString) {
     return fechaFormateada;
 }
 
-module.exports = { ObtenerFechaHoy }
+module.exports = ObtenerFechaHoy;
