@@ -109,9 +109,19 @@ async function getActualTravel() {
     }
 }
 
+async function AddNewTravelExpense(ctx, properties) {
+    ctx.reply('Agregando registro nuevo...');
+    try {
+        await CreateTravelExpensePage(properties);
+        ctx.reply('Registro insertado correctamente.');
+    } catch (error) {
+        console.error('Error al insertar el registro:', error.message);
+        ctx.reply('Ocurrió un error al insertar el registro.');
+    }   
+}
+
 async function CrearMovimientoNuevo(dbid, datos) {
     try {
-        console.log(datos);
         
         const movimientoNuevo = await notion.pages.create({
             icon: {
@@ -423,6 +433,18 @@ async function ObtenerMesesEnRangoFecha(dbid, fechaInicio, fechaFin) {
     }
 }
 
+//Crea 
+async function AgregarRegistroNuevo(ctx, datosIngresados) {
+    ctx.reply('Agregando registro nuevo...');
+    try {
+        await CrearMovimientoNuevo(opcionesDB.dbFlujoPlata, datosIngresados);
+        ctx.reply('Registro insertado correctamente.');
+    } catch (error) {
+        console.error('Error al insertar el registro:', error.message);
+        ctx.reply('Ocurrió un error al insertar el registro.');
+    }
+}
+
 module.exports = { 
     CrearMovimientoNuevo,
     ObtenerCuentasPagos,
@@ -432,5 +454,8 @@ module.exports = {
     getActualTravel,
     CrearPaginaCuotaNueva,
     ObtenerCuotasActivas,
-    ObtenerMesActual
+    ObtenerMesActual,
+    AgregarRegistroNuevo,
+    ObtenerMesesEnRangoFecha,
+    AddNewTravelExpense
 }
