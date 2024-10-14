@@ -31,9 +31,9 @@ const INGRESO_DATA_WIZARD = new WizardScene(
     // 3 - Guarda TipoMovimiento, escribe Cuentas
     async (ctx) => {
         const movimientoTipoIndice = parseInt(ctx.message.text - 1);
-        const resultCuentas = await ObtenerCuentasPagos(opcionesDB.dbMetPago);
-        cuentasPagosColeccion = resultCuentas.cuentasPagosColeccion
-        await ctx.reply(`Cuentas:\n${resultCuentas.listaCuentasPagos}`);
+        const resultCuentas = await ObtenerCuentasPagos();
+        cuentasPagosColeccion = resultCuentas.accountsData
+        await ctx.reply(`Cuentas:\n${resultCuentas.accountsList}`);
 
         ctx.wizard.state.movimientoTipoNombre = tiposGastoIngresoColeccion[movimientoTipoIndice]?.tipoGastoNombre;
 
@@ -53,7 +53,7 @@ const INGRESO_DATA_WIZARD = new WizardScene(
             movimientoTipoNombre: WizardState?.movimientoTipoNombre,
             movimientoCuentaId: WizardState?.movimientoCuentaId,
             movimientoFechaActual: await ObtenerFechaHoy(),
-            movimientoMesActualId: await ObtenerMesActual(opcionesDB.dbMeses)
+            movimientoMesActualId: await ObtenerMesActual()
         };
         // console.log(movimientoData)
         await AgregarRegistroNuevo(ctx, movimientoData)

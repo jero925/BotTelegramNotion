@@ -1,9 +1,10 @@
-const { Scenes: { WizardScene } } = require('telegraf');
+const { Scenes: { WizardScene }, Markup } = require('telegraf');
+
 const opcionesDB = require('../../config/databases');
+const { ObtenerFechaHoy } = require('../../utils/dates')
 const { opcionesMovimientoTipoIO, opcionesMovimientoImagen } = require('../../config/movements.js')
 
-const { ObtenerTipoGastoIngreso, ObtenerCuentasPagos, ObtenerMesActual, AgregarRegistroNuevo, ObtenerCuotasActivas } = require('../../notion/notion_functions')
-const { ObtenerFechaHoy } = require('../../utils/dates')
+const { ObtenerTipoGastoIngreso, ObtenerCuentasPagos, ObtenerMesActual, AgregarRegistroNuevo, getActivePayments } = require('../../notion/notion_functions')
 
 const GASTO_DATA_WIZARD = new WizardScene(
     'CREAR_GASTO_NUEVO',
@@ -24,9 +25,11 @@ const GASTO_DATA_WIZARD = new WizardScene(
             ctx.reply('Pusiste cualquiera, master')
             ctx.scene.leave();
         } else if (ctx.callbackQuery.data === 'si') {
-            const resultCuotas = await ObtenerCuotasActivas(opcionesDB.dbCuotas);
+            const resultCuotas = await getActivePayments();
             cuotasActivasColeccion = resultCuotas.cuotasActivasColeccion;
-            await ctx.reply(`Indices Cuotas activas:\n${resultCuotas.listaCuotasActivas}`);
+            await ctx.reply(`Indices Cuotas activas:\n${resultCuotas.listaCuotasActivas}`, Markup.inlineKeyboard([
+                Markup.button.callback('Pago por cuenta', 'accounts',)
+            ]));
             ctx.wizard.state.movimientoTipoNombre = 'Cuota';
             return ctx.wizard.next();
         } else if (ctx.callbackQuery.data === 'no') {
@@ -39,19 +42,23 @@ const GASTO_DATA_WIZARD = new WizardScene(
     },
     // 2 INDICE CUOTA ELEGIDO
     async (ctx) => {
+        if (ctx.callbackQuery?.data == 'accounts') {            
+            return ctx.scene.enter('MASSIVE_PAYMENTS')
+        }
+
         const movimientoCuotaIndice = parseInt(ctx.message.text);
         if (movimientoCuotaIndice === 0) {
             ctx.session.GastoIniciado = true
             return ctx.scene.enter('CREAR_CUOTA_NUEVA')
-        } else {
-            const resultCuentas = await ObtenerCuentasPagos(opcionesDB.dbMetPago);
-
+        } else {            
             ctx.wizard.state.movimientoCuotaId = cuotasActivasColeccion[movimientoCuotaIndice]?.cuotaId
             ctx.wizard.state.movimientoNombre = ' Cuota ' + (cuotasActivasColeccion[movimientoCuotaIndice]?.cuotasPagadas + 1) + ' ' + cuotasActivasColeccion[movimientoCuotaIndice]?.cuotaNombre;
             ctx.wizard.state.movimientoMonto = cuotasActivasColeccion[movimientoCuotaIndice]?.cuotaMonto
 
-            cuentasPagosColeccion = resultCuentas.cuentasPagosColeccion
-            await ctx.reply(`Cuentas:\n${resultCuentas.listaCuentasPagos}`);
+            const resultCuentas = await ObtenerCuentasPagos();
+
+            cuentasPagosColeccion = resultCuentas.accountsData
+            await ctx.reply(`Cuentas:\n${resultCuentas.accountsList}`);
             await ctx.reply(`Con que se paga?`)
 
             return ctx.wizard.selectStep(3);
@@ -73,9 +80,8 @@ const GASTO_DATA_WIZARD = new WizardScene(
             movimientoTipoNombre: WizardState?.movimientoTipoNombre,
             movimientoCuentaId: WizardState?.movimientoCuentaId,
             movimientoFechaActual: await ObtenerFechaHoy(),
-            movimientoMesActualId: await ObtenerMesActual(opcionesDB.dbMeses)
+            movimientoMesActualId: await ObtenerMesActual()
         };
-        // console.log(movimientoData)
         await AgregarRegistroNuevo(ctx, movimientoData)
         return ctx.scene.leave();
     },
@@ -98,10 +104,11 @@ const GASTO_DATA_WIZARD = new WizardScene(
     },
 
     // 6 - Guarda TipoMovimiento, escribe Cuentas
-    async (ctx) => {
-        const resultCuentas = await ObtenerCuentasPagos(opcionesDB.dbMetPago);
-        cuentasPagosColeccion = resultCuentas.cuentasPagosColeccion
-        await ctx.reply(`Cuentas:\n${resultCuentas.listaCuentasPagos}`);
+    async (ctx) => {        
+        const resultCuentas = await ObtenerCuentasPagos();
+        
+        cuentasPagosColeccion = resultCuentas.accountsData
+        await ctx.reply(`Cuentas:\n${resultCuentas.accountsList}`);
         await ctx.reply(`Con que se paga?`)
 
         movimientoTipoIndice = parseInt(ctx.message.text - 1);

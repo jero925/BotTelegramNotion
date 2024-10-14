@@ -44,7 +44,6 @@ const CUOTA_DATA_WIZARD = new WizardScene(
             cuotaMeses: await ObtenerMesesEnRangoFecha(opcionesDB.dbMeses, fechaPrimerCuota, fechaUltimaCuota)
 
         };
-        // console.log(datosCuota)
         await CrearPaginaCuotaNueva(opcionesDB.dbCuotas, datosCuota)
         await ctx.reply('Producto en cuotas agregado')
 

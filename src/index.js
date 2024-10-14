@@ -5,6 +5,10 @@ const INGRESO_DATA_WIZARD = require('./scenes/wizard/income.js')
 const GASTO_DATA_WIZARD = require('./scenes/wizard/outcome.js')
 const CUOTA_DATA_WIZARD = require('./scenes/wizard/payments.js')
 const TRAVEL_EXPENSE_WIZARD = require('./scenes/wizard/travel.js')
+const MASSIVE_PAYMENTS_WIZARD = require('./scenes/wizard/massive_payments.js');
+// const accountsListScene = require('./scenes/base/account_list.js')
+// const masivePaymentsScene = require('./scenes/base/add_masive_payments.js');
+
 
 // Crear instancias del bot y el cliente de Notion
 const bot = new Telegraf(process.env.BOT_TOKEN);
@@ -14,7 +18,15 @@ session({
     getSessionKey: (ctx) => ctx.chat && ctx.chat.id
 })
 
-const stage = new Stage([GASTO_DATA_WIZARD, INGRESO_DATA_WIZARD, CUOTA_DATA_WIZARD, TRAVEL_EXPENSE_WIZARD], { sessionName: 'chatSession' });
+const stage = new Stage([
+    GASTO_DATA_WIZARD, 
+    INGRESO_DATA_WIZARD, 
+    CUOTA_DATA_WIZARD, 
+    TRAVEL_EXPENSE_WIZARD,
+    MASSIVE_PAYMENTS_WIZARD,
+    // accountsListScene, 
+    // masivePaymentsScene
+], { sessionName: 'chatSession' });
 
 bot.use(session()); // to  be precise, session is not a must have for Scenes to work, but it sure is lonely without one
 bot.use(stage.middleware());
@@ -36,7 +48,6 @@ bot.command('ingreso', Stage.enter('CREAR_INGRESO_NUEVO'))
 bot.command('cuotas', Stage.enter('CREAR_CUOTA_NUEVA'))
 
 bot.command('viaje', Stage.enter('CREATE_TRAVEL_EXPENSE'))
-// bot.command('viaje', Stage.enter('CREATE_TRAVEL_EXPENSE'))
 
 // Escuchar opciones de texto
 bot.hears('🤑 Guita', (ctx) => {

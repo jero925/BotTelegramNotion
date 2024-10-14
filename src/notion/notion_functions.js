@@ -4,11 +4,11 @@ const { opcionesMovimientoTipoIO, opcionesMovimientoImagen, cuotaImagen } = requ
 const notion = new Client({ auth: opcionesDB.apiKeyNotion });
 
 // Obtiene el mes actual desde Notion
-async function ObtenerMesActual(dbid) {
+async function ObtenerMesActual() {
     //dbid => dbMeses
     try {
         const mesActual = await notion.databases.query({
-            database_id: dbid,
+            database_id: opcionesDB.dbMeses,
             filter: {
                 and: [
                     {
@@ -28,32 +28,60 @@ async function ObtenerMesActual(dbid) {
     }
 }
 
-async function ObtenerCuentasPagos(dbid) {
-    try {
-        const cuentasPagosObtenidas = await notion.databases.query({ 
-            database_id: dbid,
-            filter:
+async function ObtenerCuentasPagos() {
+    filters =
+    {
+        property: "Tipo",
+        select: {
+            equals: "Cuenta"
+        }
+    }
+    return getAccounts(filters)
+};
+
+async function getCreditCardList() {
+    filters = {
+        and: [
             {
                 property: "Tipo",
                 select: {
-                    equals: "Cuenta"
+                    equals: "Tarjeta"
+                }
+            },
+            {
+                property: "Active",
+                checkbox: {
+                    "equals": true
                 }
             }
+        ]
+    }
+    
+    
+    return getAccounts(filters)
+}
+
+async function getAccounts(filters) {
+    try {
+        const accounts = await notion.databases.query({
+            database_id: opcionesDB.dbMetPago,
+            filter: filters
         });
         let contador = 0
-        const cuentasPagosColeccion = cuentasPagosObtenidas.results.map(result => ({
+        
+        const accountsData = accounts.results.map(result => ({
             cuentaIndice: contador += 1,
             cuentaId: result.id,
             cuentaNombre: result.properties.Name.title[0].text.content
         }));
-
-        const listaCuentasPagos = cuentasPagosColeccion.map((cuenta) => `${cuenta.cuentaIndice}- ${cuenta.cuentaNombre}`).join('\n')
-        return { listaCuentasPagos, cuentasPagosColeccion }
+        
+        const accountsList = accountsData.map((cuenta) => `${cuenta.cuentaIndice}- ${cuenta.cuentaNombre}`).join('\n')
+        return { accountsList, accountsData }
     } catch (error) {
         console.error("Error al obtener cuentas de pago Notion:", error.message);
         throw error;
-    }
-};
+    }   
+}
 
 async function getTravelExpenseType() {
     try {
@@ -120,7 +148,7 @@ async function AddNewTravelExpense(ctx, properties) {
     }   
 }
 
-async function CrearMovimientoNuevo(dbid, datos) {
+async function CrearMovimientoNuevo(datos) {
     try {
         
         const movimientoNuevo = await notion.pages.create({
@@ -131,7 +159,7 @@ async function CrearMovimientoNuevo(dbid, datos) {
                 }
             },
             parent: {
-                database_id: dbid
+                database_id: opcionesDB.dbFlujoPlata
             },
             properties: {
                 Fecha: {
@@ -342,32 +370,50 @@ async function CrearPaginaCuotaNueva(dbid, datosCuota) {
     }
 }
 
-async function ObtenerCuotasActivas(dbid) {
+async function getActivePaymentsByCard(account_id) {
+    filter = {
+        property: "Tarjeta",
+        relation: {
+            contains: account_id
+        }
+    }
+    
+    return await getActivePayments(filter)
+}
+
+async function getActivePayments(filter) {
     today = new Date().toISOString();
+    
     try {
+        filters = [
+            {
+                property: "Activa",
+                checkbox: {
+                    equals: true
+                }
+            },
+            {
+                property: "Pagada Mes Actual",
+                checkbox: {
+                    equals: false
+                }
+            },
+            {
+                property: "Primer cuota",
+                date: {
+                    before: today
+                }
+            }
+        ]
+        
+        if (filter) {
+            filters.push(filter)
+        }
+        
         const cuotasActivasObtenidas = await notion.databases.query({
-            database_id: dbid,
+            database_id: opcionesDB.dbCuotas,
             filter: {
-                "and": [
-                    {
-                        property: "Activa",
-                        checkbox: {
-                            equals: true
-                        }
-                    },
-                    {
-                        property: "Pagada Mes Actual",
-                        checkbox: {
-                            equals: false
-                        }
-                    },
-                    {
-                        property: "Primer cuota",
-                        date: {
-                            before: today
-                        }
-                    }
-                ]
+                "and": filters
             }
         });
         let contador = 0;
@@ -387,9 +433,9 @@ async function ObtenerCuotasActivas(dbid) {
                 coutasCountCuotasPagadas: result.properties['Count Cuotas Pagadas'].formula.string
             }))
         );
-        // console.log(cuotasActivasColeccion)
         const listaCuotasActivas = cuotasActivasColeccion.map((cuota) => `${cuota.cuotaIndice} - ${cuota.cuotaNombre} ${cuota.cuotaMonto !== undefined ? `- $${cuota.cuotaMonto}` : ''} ${cuota.coutasCountCuotasPagadas !== undefined ? `- ${cuota.coutasCountCuotasPagadas}` : ''}`).join('\n');
-
+        
+        
         return { listaCuotasActivas, cuotasActivasColeccion };
     } catch (error) {
         console.error("Error al obtener Cuotas Activas:", error.message);
@@ -434,11 +480,20 @@ async function ObtenerMesesEnRangoFecha(dbid, fechaInicio, fechaFin) {
 }
 
 //Crea 
-async function AgregarRegistroNuevo(ctx, datosIngresados) {
+async function AgregarRegistroNuevo(ctx, paymentData) {
     ctx.reply('Agregando registro nuevo...');
     try {
-        await CrearMovimientoNuevo(opcionesDB.dbFlujoPlata, datosIngresados);
+        await CrearMovimientoNuevo(paymentData);
         ctx.reply('Registro insertado correctamente.');
+    } catch (error) {
+        console.error('Error al insertar el registro:', error.message);
+        ctx.reply('Ocurrió un error al insertar el registro.');
+    }
+}
+
+async function CreatePayment(ctx, paymentData) {
+    try {
+        await CrearMovimientoNuevo(paymentData);
     } catch (error) {
         console.error('Error al insertar el registro:', error.message);
         ctx.reply('Ocurrió un error al insertar el registro.');
@@ -453,9 +508,12 @@ module.exports = {
     CreateTravelExpensePage,
     getActualTravel,
     CrearPaginaCuotaNueva,
-    ObtenerCuotasActivas,
+    getActivePayments,
     ObtenerMesActual,
     AgregarRegistroNuevo,
     ObtenerMesesEnRangoFecha,
-    AddNewTravelExpense
+    AddNewTravelExpense,
+    getCreditCardList,
+    getActivePaymentsByCard,
+    CreatePayment
 }
