@@ -1,12 +1,18 @@
-const { Scenes: { WizardScene } } = require('telegraf');
+import { Scenes } from 'telegraf';
 
-const { ObtenerFechaHoy } = require('../../utils/dates')
-const { opcionesMovimientoTipoIO, opcionesMovimientoImagen } = require('../../config/movements.js')
-const currenyFormatUSD = require('../../config/currency.js')
+import { ObtenerFechaHoy } from '../../utils/dates.js';
+import { opcionesMovimientoTipoIO, opcionesMovimientoImagen } from '../../config/movements.js';
+import currenyFormatUSD from '../../config/currency.js';
 
-const { getCreditCardList, getActivePaymentsByCard, ObtenerCuentasPagos, ObtenerMesActual, CreatePayment } = require('../../notion/notion_functions')
+import { 
+    getCreditCardList, 
+    getActivePaymentsByCard, 
+    ObtenerCuentasPagos, 
+    ObtenerMesActual, 
+    CreatePayment 
+} from '../../notion/notion_functions.js';
 
-const MASSIVE_PAYMENTS_WIZARD = new WizardScene(
+const MASSIVE_PAYMENTS_WIZARD = new Scenes.WizardScene(
     'MASSIVE_PAYMENTS',
     // Get credit cards with pending payments
     async (ctx) => {
@@ -75,6 +81,6 @@ const MASSIVE_PAYMENTS_WIZARD = new WizardScene(
         ctx.reply(`Gastos añadidos correctamente por un total de: ${currenyFormatUSD.format(totalAmount)}`);
         return ctx.scene.leave();
     }
-)
+);
 
-module.exports = MASSIVE_PAYMENTS_WIZARD;
+export default MASSIVE_PAYMENTS_WIZARD;

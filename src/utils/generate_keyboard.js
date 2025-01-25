@@ -1,4 +1,4 @@
-function GenerarOpcionesTeclado(opciones) {
+export default function GenerarOpcionesTeclado(opciones) {
     var teclado = {
         reply_markup: {
             keyboard: [],
@@ -13,5 +13,3 @@ function GenerarOpcionesTeclado(opciones) {
 
     return teclado;
 }
-
-module.exports = GenerarOpcionesTeclado;

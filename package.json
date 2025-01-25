@@ -2,7 +2,8 @@
   "name": "bottelegramnotion",
   "version": "1.0.0",
   "description": "Primer uso del bot de Telegram para automatizacion",
-  "main": "index.js",
+  "type": "module",
+  "exports": "./src/index.js",
   "scripts": {
     "start": "node index.js"
   },

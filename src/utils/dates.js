@@ -1,13 +1,13 @@
 // Función para obtener la fecha actual en formato Notion
-function ObtenerFechaHoy() {
+export function ObtenerFechaHoy() {
     const fechaActual = new Date();
 
     // Obtiene componentes de la fecha
-    fechaNotion = formatDate(fechaActual)
+    const fechaNotion = formatDate(fechaActual)
     return fechaNotion
 }
 
-function formatDate(fechaString) {
+export function formatDate(fechaString) {
     const fecha = new Date(fechaString)
     const year = fecha.getFullYear();
     const month = String(fecha.getMonth() + 1).padStart(2, '0');  // Meses son 0-indexados, por lo que se suma 1
@@ -19,7 +19,7 @@ function formatDate(fechaString) {
     return fechaFormateada;
 }
 
-function ObtenerPrimerDiaMesSiguiente(fechaString, cantidadMeses) {
+export function ObtenerPrimerDiaMesSiguiente(fechaString, cantidadMeses) {
     // Convertir la cadena de texto a un objeto Date
     const fecha = new Date(fechaString);
 
@@ -34,5 +34,3 @@ function ObtenerPrimerDiaMesSiguiente(fechaString, cantidadMeses) {
 
     return fechaPrimerDiaMesSiguiente;
 }
-
-module.exports = { ObtenerFechaHoy, ObtenerPrimerDiaMesSiguiente };

@@ -3,5 +3,5 @@ const currenyFormatUSD = new Intl.NumberFormat("en", {
     currency: "USD",
 })
 
-module.exports = currenyFormatUSD;
+export default currenyFormatUSD;
 

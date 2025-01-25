@@ -1,11 +1,19 @@
-const { Scenes: { WizardScene } } = require('telegraf');
-const opcionesDB = require('../../config/databases');
-const { cuotaImagen } = require('../../config/movements.js')
+import { Scenes } from 'telegraf';
+import opcionesDB from '../../config/databases.js';
+import { cuotaImagen } from '../../config/movements.js';
 
-const { ObtenerMesesEnRangoFecha, CrearPaginaCuotaNueva } = require('../../notion/notion_functions')
-const { ObtenerFechaHoy, ObtenerPrimerDiaMesSiguiente } = require('../../utils/dates')
+import { 
+    ObtenerMesesEnRangoFecha, 
+    CrearPaginaCuotaNueva 
+} from '../../notion/notion_functions.js';
 
-const CUOTA_DATA_WIZARD = new WizardScene(
+import { 
+    ObtenerFechaHoy, 
+    ObtenerPrimerDiaMesSiguiente 
+} from '../../utils/dates.js';
+
+
+const CUOTA_DATA_WIZARD = new Scenes.WizardScene(
     'CREAR_CUOTA_NUEVA',
     // 0 - Pregunta nombre
     async (ctx) => {
@@ -49,6 +57,6 @@ const CUOTA_DATA_WIZARD = new WizardScene(
 
         return ctx.scene.leave();
     },
-)
+);
 
-module.exports = CUOTA_DATA_WIZARD;
+export default CUOTA_DATA_WIZARD;

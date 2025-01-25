@@ -1,8 +1,13 @@
-const { Scenes: { WizardScene } } = require('telegraf');
+import { Scenes } from 'telegraf';
 
-const { getActualTravel, getTravelExpenseType, AddNewTravelExpense } = require('../../notion/notion_functions')
+import { 
+    getActualTravel, 
+    getTravelExpenseType, 
+    AddNewTravelExpense 
+} from '../../notion/notion_functions.js';
 
-const TRAVEL_EXPENSE_WIZARD = new WizardScene(
+
+const TRAVEL_EXPENSE_WIZARD = new Scenes.WizardScene(
     'CREATE_TRAVEL_EXPENSE',
     // 0
     async (ctx) => {
@@ -58,6 +63,6 @@ const TRAVEL_EXPENSE_WIZARD = new WizardScene(
 
         return ctx.scene.leave();
     }
-)
+);
 
-module.exports = TRAVEL_EXPENSE_WIZARD;
+export default TRAVEL_EXPENSE_WIZARD;

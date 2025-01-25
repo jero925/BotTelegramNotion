@@ -1,13 +1,13 @@
-const { Telegraf, Scenes: { Stage }, session } = require('telegraf');
+import { Telegraf, Scenes, session } from 'telegraf';
 
-const GenerarOpcionesTeclado = require('./utils/generate_keyboard.js')
-const INGRESO_DATA_WIZARD = require('./scenes/wizard/income.js')
-const GASTO_DATA_WIZARD = require('./scenes/wizard/outcome.js')
-const CUOTA_DATA_WIZARD = require('./scenes/wizard/payments.js')
-const TRAVEL_EXPENSE_WIZARD = require('./scenes/wizard/travel.js')
-const MASSIVE_PAYMENTS_WIZARD = require('./scenes/wizard/massive_payments.js');
-// const accountsListScene = require('./scenes/base/account_list.js')
-// const masivePaymentsScene = require('./scenes/base/add_masive_payments.js');
+import GenerarOpcionesTeclado from './utils/generate_keyboard.js';
+import INGRESO_DATA_WIZARD from './scenes/wizard/income.js';
+import GASTO_DATA_WIZARD from './scenes/wizard/outcome.js';
+import CUOTA_DATA_WIZARD from './scenes/wizard/payments.js';
+import TRAVEL_EXPENSE_WIZARD from './scenes/wizard/travel.js';
+import MASSIVE_PAYMENTS_WIZARD from './scenes/wizard/massive_payments.js';
+
+const { Stage } = Scenes
 
 
 // Crear instancias del bot y el cliente de Notion
@@ -24,8 +24,6 @@ const stage = new Stage([
     CUOTA_DATA_WIZARD, 
     TRAVEL_EXPENSE_WIZARD,
     MASSIVE_PAYMENTS_WIZARD,
-    // accountsListScene, 
-    // masivePaymentsScene
 ], { sessionName: 'chatSession' });
 
 bot.use(session()); // to  be precise, session is not a must have for Scenes to work, but it sure is lonely without one
@@ -33,7 +31,6 @@ bot.use(stage.middleware());
 
 //Configuracion inicial del bot
 bot.start((ctx) => {
-    // console.log(ctx.update.message.chat.id)
     // Configura opciones del teclado
     const opTecladoInicio = ['🤑 Guita', 'Opción 2', 'Opción 3', 'Opción 4']
     let keyboard = GenerarOpcionesTeclado(opTecladoInicio)
@@ -81,36 +78,3 @@ CUOTA_DATA_WIZARD.command('cancelar', (ctx) => {
     ctx.reply('Saliendo de la escena...')
     return ctx.scene.leave();
 })
-
-// async function getMovementTypeIndexByName(dbid, typeName) {
-//     try {
-//         // Primero, obtenemos la lista de tipos de gasto/ingreso usando la función anterior
-//         const { tiposGastoIngresoColeccion } = await ObtenerTipoGastoIngreso(dbid);
-        
-//         // Buscamos el tipo que coincida con el nombre que se pasa como parámetro
-//         const tipoEncontrado = tiposGastoIngresoColeccion.find(tipo => tipo.tipoGastoNombre.toLowerCase() === typeName.toLowerCase());
-
-//         // Si el tipo fue encontrado, retornamos su índice
-//         if (tipoEncontrado) {
-//             return tipoEncontrado.tipoGastoIndice;
-//         } else {
-//             throw new Error(`No se encontró un tipo de gasto o ingreso con el nombre: ${typeName}`);
-//         }
-//     } catch (error) {
-//         console.error("Error al obtener movimiento tipo Notion:", error.message);
-//     }
-// }
-
-// function reiniciarBot(ctx) {
-//     // Detener el bot
-//     bot.stop();
-
-//     // Esperar 2 segundos antes de reiniciar
-//     setTimeout(() => {
-//         // Volver a iniciar el bot
-//         bot.launch();
-
-//         // Añadir cualquier lógica adicional después de reiniciar
-//         ctx.reply('Reinicado')
-//     }, 2000);
-// }
