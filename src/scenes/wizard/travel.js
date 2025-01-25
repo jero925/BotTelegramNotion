@@ -49,14 +49,13 @@ const TRAVEL_EXPENSE_WIZARD = new Scenes.WizardScene(
         ctx.wizard.state.travelExpenseType = ctx.wizard.state.travelExpensesCollection[parseFloat(ctx.message.text - 1)]?.name;
         const WizardState = ctx.wizard.state
         
-        properties = {
+        const properties = {
             name: WizardState?.travelExpenseName,
             type: WizardState?.travelExpenseType,
             amount: WizardState?.travelExpenseAmount,
             payer: WizardState?.travelExpensePayer,
             travelId: WizardState?.actualTravelData[0].id,
         };
-        // console.log(movimientoData)
         
         await AddNewTravelExpense(ctx, properties)
         await ctx.reply('Gasto agregado')

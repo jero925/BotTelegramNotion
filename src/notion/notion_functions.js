@@ -132,7 +132,6 @@ export async function getActualTravel() {
                 }
             }
         });
-
         return results
     } catch (error) {
 
