@@ -60,12 +60,13 @@ const GASTO_DATA_WIZARD = new Scenes.WizardScene(
 
     // 2 - Procesa el índice de cuota o redirige a la creación de una nueva cuota
     async (ctx) => {
-        const { text } = ctx.message;
-        const movimientoCuotaIndice = parseInt(text, 10);
-
+        
         if (ctx.callbackQuery?.data === 'accounts') {
             return ctx.scene.enter('MASSIVE_PAYMENTS');
         }
+        
+        const { text } = ctx.message;
+        const movimientoCuotaIndice = parseInt(text, 10);
 
         if (movimientoCuotaIndice === 0) {
             ctx.session.GastoIniciado = true;
