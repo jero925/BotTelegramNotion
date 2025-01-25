@@ -4,19 +4,19 @@ import { ObtenerFechaHoy } from '../../utils/dates.js';
 import { opcionesMovimientoTipoIO, opcionesMovimientoImagen } from '../../config/movements.js';
 import currenyFormatUSD from '../../config/currency.js';
 
-import { 
-    getCreditCardList, 
-    getActivePaymentsByCard, 
-    ObtenerCuentasPagos, 
-    ObtenerMesActual, 
-    CreatePayment 
+import {
+    getCreditCardList,
+    getActivePaymentsByCard,
+    ObtenerCuentasPagos,
+    ObtenerMesActual,
+    CreatePayment
 } from '../../notion/notion_functions.js';
 
 const MASSIVE_PAYMENTS_WIZARD = new Scenes.WizardScene(
     'MASSIVE_PAYMENTS',
     // Get credit cards with pending payments
     async (ctx) => {
-        
+
         const { accountsList, accountsData } = await getCreditCardList()
         ctx.wizard.state.creditCardsData = accountsData;
         await ctx.reply(`Tarjetas:\n${accountsList}`);
@@ -43,15 +43,16 @@ const MASSIVE_PAYMENTS_WIZARD = new Scenes.WizardScene(
 
         const cardId = ctx.wizard.state.creditCardsData[cardIndex]?.cuentaId
 
-        const { cuotasActivasColeccion }  = await getActivePaymentsByCard(cardId)
+        const { cuotasActivasColeccion } = await getActivePaymentsByCard(cardId)
         if (!cuotasActivasColeccion) {
-            ctx.reply(`No se han encontrado pendientes. \n Saliendo de la escena...`)
+            ctx.reply(`No se han encontrado pendientes. \n Saliendo...`)
             return ctx.scene.leave()
         }
 
         ctx.reply('Añadiendo pagos...');
 
         let totalAmount = 0
+        let addedPayments = ''
         // Create a list of promises and handle them all with Promise.all
         const paymentPromises = cuotasActivasColeccion.map(async (cuota) => {
             if (!cuota.cuotaId) {
@@ -59,7 +60,8 @@ const MASSIVE_PAYMENTS_WIZARD = new Scenes.WizardScene(
             }
 
             totalAmount += cuota?.cuotaMonto
-    
+            addedPayments += `\n${cuota?.cuotaNombre} - $${cuota?.cuotaMonto}`
+
             const movimientoData = {
                 movimientoTipoIO: opcionesMovimientoTipoIO?.Gasto,
                 movimientoImagen: opcionesMovimientoImagen?.Gasto,
@@ -71,14 +73,15 @@ const MASSIVE_PAYMENTS_WIZARD = new Scenes.WizardScene(
                 movimientoFechaActual: await ObtenerFechaHoy(),
                 movimientoMesActualId: await ObtenerMesActual()
             };
-            
+
             return CreatePayment(ctx, movimientoData);
         });
-    
+
         // Wait for all the promises to resolve
         await Promise.all(paymentPromises);
-    
-        ctx.reply(`Gastos añadidos correctamente por un total de: ${currenyFormatUSD.format(totalAmount)}`);
+        ctx.reply(`Gastos añadidos correctamente: ${addedPayments}
+        
+Total: ${currenyFormatUSD.format(totalAmount)}`);
         return ctx.scene.leave();
     }
 );
