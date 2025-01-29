@@ -1,12 +1,13 @@
 import { Client } from '@notionhq/client';
 import opcionesDB from '../config/databases.js';
 import { opcionesMovimientoTipoIO } from '../config/movements.js';
+import NotionHelper from "notion-helper";
+const { createNotion } = NotionHelper;
 
 const notion = new Client({ auth: opcionesDB.apiKeyNotion });
 
 // Obtiene el mes actual desde Notion
 export async function ObtenerMesActual() {
-    //dbid => dbMeses
     try {
         const mesActual = await notion.databases.query({
             database_id: opcionesDB.dbMeses,
@@ -149,104 +150,27 @@ export async function AddNewTravelExpense(ctx, properties) {
     }
 }
 
-export async function CrearMovimientoNuevo(datos) {
+export async function CrearMovimientoNuevo(properties) {
     try {
+        const notionBuilder = createNotion();
 
-        const movimientoNuevo = await notion.pages.create({
-            icon: {
-                type: "external",
-                external: {
-                    url: datos.movimientoImagen//"https:/ / www.notion.so / icons / downward_red.svg" //reemplazado por variable dependiendo gasto o ingreso va a ir un icono u otro
-                }
-            },
-            parent: {
-                database_id: opcionesDB.dbFlujoPlata
-            },
-            properties: {
-                Fecha: {
-                    type: "date",
-                    date: {
-                        start: datos.movimientoFechaActual //Tiene que ir la fecha de hoy
-                    }
-                },
-                "Producto en cuotas": {
-                    type: "relation",
-                    relation: datos.movimientoCuotaId ? [{ id: datos.movimientoCuotaId }] : [],
-                    has_more: false
-                },
-                Cuenta: {
-                    type: "relation",
-                    relation: [
-                        {
-                            id: datos.movimientoCuentaId
-                        }
-                    ],
-                    has_more: false
-                },
-                Tipo: {
-                    type: "multi_select",
-                    multi_select: [
-                        {
-                            name: datos.movimientoTipoNombre
-                        }//,
-                        // {
-                        //     name: "Social"
-                        // }
-                    ]
-                },
-                Suscripcion: {
-                    type: "relation",
-                    relation: [],
-                    has_more: false
-                },
-                "I/O": {
-                    type: "select",
-                    select: {
-                        name: datos.movimientoTipoIO
-                    }
-                },
-                "Estado Suscripcion": {
-                    type: "status",
-                    status: {
-                        name: "No sub"
-                    }
-                },
-                "Ingreso. Mes Año": {
-                    type: "relation",
-                    relation: datos.movimientoTipoIO === opcionesMovimientoTipoIO.Ingreso ? [
-                        {
-                            id: datos.movimientoMesActualId
-                        }
-                    ] : [],
-                    has_more: false
-                },
-                Monto: {
-                    type: "number",
-                    number: datos.movimientoTipoIO === opcionesMovimientoTipoIO.Gasto ? -datos.movimientoMonto : datos.movimientoMonto
-                },
-                "Gasto. Mes Año": {
-                    type: "relation",
-                    relation: datos.movimientoTipoIO === opcionesMovimientoTipoIO.Gasto ? [
-                        {
-                            id: datos.movimientoMesActualId
-                        }
-                    ] : [],
-                    has_more: false
-                },
-                Nombre: {
-                    id: "title",
-                    type: "title",
-                    title: [
-                        {
-                            type: "text",
-                            text: {
-                                content: datos.movimientoNombre
-                            }
-                        }
-                    ]
-                }
-            }
-        })
+        const result = notionBuilder
+            .parentDb(opcionesDB.dbFlujoPlata)
+            .icon(properties.movimientoImagen)
+            .title('Nombre', properties.movimientoNombre)
+            .date('Fecha', properties.movimientoFechaActual)
+            .relation('Producto en cuotas', properties.movimientoCuotaId)
+            .relation('Cuenta', properties.movimientoCuentaId)
+            .multiSelect('Tipo', properties.movimientoTipoNombre)
+            // .relation('Suscripcion', '')
+            .select('I/O', properties.movimientoTipoIO)
+            .status('Estado Suscripcion', 'No sub')
+            .relation('Ingreso. Mes Año', properties.movimientoTipoIO === opcionesMovimientoTipoIO.Ingreso ? properties.movimientoMesActualId : null)
+            .number('Monto', properties.movimientoTipoIO === opcionesMovimientoTipoIO.Gasto ? -properties.movimientoMonto : properties.movimientoMonto)
+            .relation('Gasto. Mes Año', properties.movimientoTipoIO === opcionesMovimientoTipoIO.Gasto ? properties.movimientoMesActualId : null)
+            .build();
+        
+        const response = await notion.pages.create(result.content)
     } catch (error) {
         console.error('Error al insertar el registro:', error.message);
     }
@@ -255,117 +179,39 @@ export async function CrearMovimientoNuevo(datos) {
 
 export async function CreateTravelExpensePage(properties) {
     try {
-        const movimientoNuevo = await notion.pages.create({
-            parent: {
-                database_id: opcionesDB.dbGastosViaje
-            },
-            properties: {
-                Tipo: {
-                    type: "multi_select",
-                    multi_select: [
-                        {
-                            name: properties.type
-                        }
-                    ]
-                },
-                Pagador: {
-                    type: "select",
-                    select: {
-                        name: properties.payer
-                    }
-                },
-                Monto: {
-                    type: "number",
-                    number: properties.amount
-                },
-                Viaje: {
-                    type: "relation",
-                    relation: [
-                        {
-                            id: properties.travelId
-                        }
-                    ],
-                    has_more: false
-                },
-                Nombre: {
-                    id: "title",
-                    type: "title",
-                    title: [
-                        {
-                            type: "text",
-                            text: {
-                                content: properties.name
-                            }
-                        }
-                    ]
-                }
-            }
-        })
+        const notionBuilder = createNotion();
+
+        const result = notionBuilder
+            .parentDb(opcionesDB.dbGastosViaje)
+            .title('Nombre', properties.name)
+            .multiSelect('Tipo', properties.type)
+            .select('Pagador', properties.payer)
+            .number('Monto', properties.amount)
+            .relation('Viaje', properties.travelId)
+            .build();
+
+        const response = await notion.pages.create(result.content)
     } catch (error) {
         console.error('Error al insertar el registro:', error.message);
     }
 }
 
-export async function CrearPaginaCuotaNueva(dbid, datosCuota) {
+export async function CrearPaginaCuotaNueva(dbid, properties) {
     try {
-        // const mesesRelacionados = datosCuota.cuotaMeses.map(mes => ({ id: mes.mesId })); //PARA AGREGAR ANTES
-        const cuotaNueva = await notion.pages.create({
-            icon: {
-                type: "external",
-                external: {
-                    url: datosCuota.cuotaImagen //https://www.notion.so/icons/credit-card_gray.svg
-                }
-            },
-            parent: {
-                database_id: dbid
-            },
-            properties: {
-                "Monto Total": {
-                    type: "number",
-                    number: datosCuota.cuotaMonto
-                },
-                "Cantidad de cuotas": {
-                    type: "select",
-                    select: {
-                        name: datosCuota.cuotaCantidadCuotas
-                    }
-                },
-                /* Por el momento no necesario
-                "Monto Regalado": {
-                    type: "number",
-                    number: null
-                },
-                */
-                "Primer cuota": {
-                    type: "date",
-                    date: {
-                        start: datosCuota.cuotaFechaPrimerCuota
-                    }
-                },
-                "Fecha de compra": {
-                    type: "date",
-                    date: {
-                        start: datosCuota.cuotaFechaActual
-                    }
-                },
-                Meses: {
-                    type: "relation",
-                    relation: datosCuota.cuotaMeses
-                },
-                Name: {
-                    id: "title",
-                    type: "title",
-                    title: [
-                        {
-                            type: "text",
-                            text: {
-                                content: datosCuota.cuotaNombre
-                            }
-                        }
-                    ]
-                }
-            }
-        })
+        const notionBuilder = createNotion();
+
+        const result = notionBuilder
+            .parentDb(opcionesDB.dbFlujoPlata)
+            .icon(properties.cuotaImagen)
+            .title('Nombre', properties.cuotaNombre)
+            .number('Monto Total', properties.cuotaMonto)
+            .select('Cantidad de cuotas', properties.cuotaCantidadCuotas)
+            .date("Primer cuota", properties.cuotaFechaPrimerCuota)
+            .date("Fecha de compra", properties.cuotaFechaActual)
+            .relation('Meses', properties.cuotaMeses)
+            .build();
+
+        const response = await notion.pages.create(result.content)
     } catch (error) {
         console.error('Error al insertar el nuevo producto en cuotas:', error.message);
     }
