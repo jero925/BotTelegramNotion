@@ -9,8 +9,9 @@ import {
     ObtenerCuentasPagos,
     ObtenerMesActual,
     AgregarRegistroNuevo,
-    getActivePayments
-} from '../../notion/notion_functions.js';
+} from '../../notion/notion-functions.js';
+
+import { getActivePayments } from '../../notion/due-payments.js'
 
 const GASTO_DATA_WIZARD = new Scenes.WizardScene(
     'CREAR_GASTO_NUEVO',

@@ -1,11 +1,11 @@
 import { Telegraf, Scenes, session } from 'telegraf';
 
 import GenerarOpcionesTeclado from './utils/generate_keyboard.js';
-import INGRESO_DATA_WIZARD from './scenes/wizard/income.js';
-import GASTO_DATA_WIZARD from './scenes/wizard/outcome.js';
-import CUOTA_DATA_WIZARD from './scenes/wizard/payments.js';
-import TRAVEL_EXPENSE_WIZARD from './scenes/wizard/travel.js';
-import MASSIVE_PAYMENTS_WIZARD from './scenes/wizard/massive_payments.js';
+import INCOME_WIZARD from './scenes/wizard/income.js';
+// import GASTO_DATA_WIZARD from './scenes/wizard/outcome.js';
+// import CUOTA_DATA_WIZARD from './scenes/wizard/payments.js';
+// import TRAVEL_EXPENSE_WIZARD from './scenes/wizard/travel.js';
+// import MASSIVE_PAYMENTS_WIZARD from './scenes/wizard/massive-payments.js';
 
 const { Stage } = Scenes
 
@@ -19,11 +19,11 @@ session({
 })
 
 const stage = new Stage([
-    GASTO_DATA_WIZARD, 
-    INGRESO_DATA_WIZARD, 
-    CUOTA_DATA_WIZARD, 
-    TRAVEL_EXPENSE_WIZARD,
-    MASSIVE_PAYMENTS_WIZARD,
+    // GASTO_DATA_WIZARD, 
+    INCOME_WIZARD 
+    // CUOTA_DATA_WIZARD, 
+    // TRAVEL_EXPENSE_WIZARD,
+    // MASSIVE_PAYMENTS_WIZARD,
 ], { sessionName: 'chatSession' });
 
 bot.use(session()); // to  be precise, session is not a must have for Scenes to work, but it sure is lonely without one
@@ -40,7 +40,7 @@ bot.start((ctx) => {
 // Comandos del bot
 bot.command('gasto', Stage.enter('CREAR_GASTO_NUEVO'))
 
-bot.command('ingreso', Stage.enter('CREAR_INGRESO_NUEVO'))
+bot.command('ingreso', Stage.enter('CREATE_NEW_INCOME'))
 
 bot.command('cuotas', Stage.enter('CREAR_CUOTA_NUEVA'))
 
@@ -56,7 +56,7 @@ bot.hears('🤑 Guita', (ctx) => {
 
 bot.hears('↓ Gasto', Stage.enter('CREAR_GASTO_NUEVO'));
 
-bot.hears('↑ Ingreso', Stage.enter('CREAR_INGRESO_NUEVO'));
+bot.hears('↑ Ingreso', Stage.enter('CREATE_NEW_INCOME'));
 
 //Ayuda del bot
 bot.help((ctx) => {
@@ -66,15 +66,15 @@ bot.help((ctx) => {
 bot.launch()
 
 //Comandos Wizards
-INGRESO_DATA_WIZARD.command('cancelar', (ctx) => {
+INCOME_WIZARD.command('cancelar', (ctx) => {
     ctx.reply('Saliendo de la escena...')
     return ctx.scene.leave();
 })
-GASTO_DATA_WIZARD.command('cancelar', (ctx) => {
-    ctx.reply('Saliendo de la escena...')
-    return ctx.scene.leave();
-})
-CUOTA_DATA_WIZARD.command('cancelar', (ctx) => {
-    ctx.reply('Saliendo de la escena...')
-    return ctx.scene.leave();
-})
+// GASTO_DATA_WIZARD.command('cancelar', (ctx) => {
+//     ctx.reply('Saliendo de la escena...')
+//     return ctx.scene.leave();
+// })
+// CUOTA_DATA_WIZARD.command('cancelar', (ctx) => {
+//     ctx.reply('Saliendo de la escena...')
+//     return ctx.scene.leave();
+// })

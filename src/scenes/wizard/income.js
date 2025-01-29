@@ -1,119 +1,135 @@
 import { Scenes } from 'telegraf';
-import opcionesDB from '../../config/databases.js';
-import { opcionesMovimientoTipoIO, opcionesMovimientoImagen } from '../../config/movements.js';
+import dbOptions from '../../config/databases.js';
+import { movementTypeIOOptions, movementImageOptions } from '../../config/movements.js';
+import { queryDatabase, retrieveDatabase } from '../../services/notion-service.js';
+import { getCurrentMonth } from '../../services/month-service.js';
+import { getPaymentAccounts } from '../../services/account-service.js';
+import { createNewMovement } from '../../services/movement-service.js';
+import { getTodayDate } from '../../utils/dates.js';
 
-import {
-    ObtenerTipoGastoIngreso,
-    ObtenerCuentasPagos,
-    ObtenerMesActual,
-    AgregarRegistroNuevo
-} from '../../notion/notion_functions.js';
+class IncomeWizard {
+    constructor() {
+        this.scene = new Scenes.WizardScene(
+            'CREATE_NEW_INCOME',
+            this.askForIncomeName.bind(this),
+            this.saveIncomeNameAndAskForAmount.bind(this),
+            this.saveAmountAndAskForMovementType.bind(this),
+            this.saveMovementTypeAndAskForAccount.bind(this),
+            this.saveAccountAndRegisterIncome.bind(this)
+        );
+    }
 
-import { ObtenerFechaHoy } from '../../utils/dates.js';
-
-const INGRESO_DATA_WIZARD = new Scenes.WizardScene(
-    'CREAR_INGRESO_NUEVO',
-    // 0 - Pregunta nombre
-    async (ctx) => {
-        await ctx.reply('Nombre del ingreso')
+    async askForIncomeName(ctx) {
+        await ctx.reply('Nombre del ingreso');
         return ctx.wizard.next();
-    },
+    }
 
-    // 1 - Guarda Nombre, pregunta Monto
-    async (ctx) => {
-        if (!ctx.message.text) {
+    async saveIncomeNameAndAskForAmount(ctx) {
+        const incomeName = ctx.message.text;
+
+        if (!incomeName) {
             await ctx.reply('El nombre no puede estar vacío. Por favor, ingresa el nombre del ingreso.');
-            ctx.scene.reset();
+            return ctx.scene.reset();
         }
 
-        ctx.wizard.state.movimientoNombre = ctx.message.text
-        await ctx.reply(`Monto`)
-        return ctx.wizard.next()
-    },
-    // 2 - Guarda Monto, pregunta Tipo Movimiento
-    async (ctx) => {
-        const monto = parseFloat(ctx.message.text);
+        ctx.wizard.state.incomeName = incomeName;
+        await ctx.reply('Monto');
+        return ctx.wizard.next();
+    }
 
-        // Validar monto
-        if (isNaN(monto) || monto <= 0) {
+    async saveAmountAndAskForMovementType(ctx) {
+        
+        const amount = parseFloat(ctx.message.text);
+
+        if (isNaN(amount) || amount <= 0) {
             await ctx.reply('Por favor, ingresa un monto válido.');
             return;
         }
 
-        ctx.wizard.state.movimientoMonto = monto;
-
-        const resultTiposIngreso = await ObtenerTipoGastoIngreso(opcionesDB.dbFlujoPlata);
-        const tiposGastoIngresoColeccion = resultTiposIngreso.tiposGastoIngresoColeccion;
-
-        if (!tiposGastoIngresoColeccion || tiposGastoIngresoColeccion.length === 0) {
-            await ctx.reply('No se encontraron tipos de ingreso. Intenta nuevamente más tarde.');
+        ctx.wizard.state.incomeAmount = amount;
+        const movementTypes = await this.getMovementTypes();
+        if (!movementTypes || movementTypes.length === 0) {
+            await ctx.reply('No se encontraron tipos de movimiento. Intenta nuevamente más tarde.');
             return ctx.scene.leave();
         }
 
-        ctx.wizard.state.tiposGastoIngresoColeccion = tiposGastoIngresoColeccion;
+        ctx.wizard.state.movementTypes = movementTypes;
 
-        await ctx.reply(`índice del Tipo de Movimiento:\n${resultTiposIngreso.listaGastoTipos}`);
-        return ctx.wizard.next()
-    },
+        await ctx.reply(`Índice del Tipo de Movimiento:\n${this.formatMovementTypes(movementTypes)}`);
+        return ctx.wizard.next();
+    }
 
-    // 3 - Guarda TipoMovimiento, escribe Cuentas
-    async (ctx) => {
-        const movimientoTipoIndice = parseInt(ctx.message.text) - 1;  // Ajustar índice de 1 a 0
-        const tiposGastoIngresoColeccion = ctx.wizard.state.tiposGastoIngresoColeccion;
+    async saveMovementTypeAndAskForAccount(ctx) {
+        const movementTypeIndex = parseInt(ctx.message.text) - 1;  // Ajustar índice de 1 a 0
+        const movementTypes = ctx.wizard.state.movementTypes;
 
-        // Validar índice
-        if (isNaN(movimientoTipoIndice) || movimientoTipoIndice < 0) {
+        if (isNaN(movementTypeIndex) || movementTypeIndex < 0) {
             await ctx.reply('Índice de tipo de movimiento inválido. Por favor, elige un tipo válido.');
             return;
         }
-        
-        ctx.wizard.state.movimientoTipoNombre = tiposGastoIngresoColeccion[movimientoTipoIndice]?.tipoGastoNombre;
 
-        const resultCuentas = await ObtenerCuentasPagos();
+        ctx.wizard.state.movementTypeName = movementTypes[movementTypeIndex]?.name;
 
-        if (!resultCuentas || !resultCuentas.accountsData || resultCuentas.accountsData.length === 0) {
+        const paymentAccounts = await getPaymentAccounts();
+
+        if (!paymentAccounts || !paymentAccounts.accountsData || paymentAccounts.accountsData.length === 0) {
             await ctx.reply('No se encontraron cuentas. Intenta nuevamente más tarde.');
             return ctx.scene.leave();
         }
 
-        ctx.wizard.state.cuentasPagosColeccion = resultCuentas.accountsData;
+        ctx.wizard.state.paymentAccounts = paymentAccounts.accountsData;
 
-        await ctx.reply(`Cuentas:\n${resultCuentas.accountsList}`);
-        await ctx.reply('Dónde entra la plata?');
+        await ctx.reply(`Cuentas:\n${paymentAccounts.accountsList}`);
+        await ctx.reply('¿Dónde entra la plata?');
 
         return ctx.wizard.next();
-    },
-    
-    // 4 FINAL, ingresa movimiento
-    async (ctx) => {
-        const movimientoCuentaIndice = parseInt(ctx.message.text) - 1;  // Ajustar índice de 1 a 0
-        const cuentasPagosColeccion = ctx.wizard.state.cuentasPagosColeccion;
+    }
 
-        // Validar cuenta seleccionada
-        if (isNaN(movimientoCuentaIndice) || movimientoCuentaIndice < 0 || movimientoCuentaIndice >= cuentasPagosColeccion.length) {
+    async saveAccountAndRegisterIncome(ctx) {
+        const accountIndex = parseInt(ctx.message.text) - 1;  // Ajustar índice de 1 a 0
+        const paymentAccounts = ctx.wizard.state.paymentAccounts;
+
+        if (isNaN(accountIndex) || accountIndex < 0 || accountIndex >= paymentAccounts.length) {
             await ctx.reply('Índice de cuenta inválido. Por favor, elige una cuenta válida.');
             return;
         }
-        
-        ctx.wizard.state.movimientoCuentaId = cuentasPagosColeccion[movimientoCuentaIndice]?.cuentaId;
 
-        const WizardState = ctx.wizard.state;
-        const movimientoData = {
-            movimientoTipoIO: opcionesMovimientoTipoIO?.Ingreso,
-            movimientoImagen: opcionesMovimientoImagen?.Ingreso,
-            movimientoNombre: WizardState?.movimientoNombre,
-            movimientoMonto: WizardState?.movimientoMonto,
-            movimientoTipoNombre: WizardState?.movimientoTipoNombre,
-            movimientoCuentaId: WizardState?.movimientoCuentaId,
-            movimientoFechaActual: await ObtenerFechaHoy(),
-            movimientoMesActualId: await ObtenerMesActual()
+        ctx.wizard.state.accountId = paymentAccounts[accountIndex]?.accountId;
+
+        const incomeData = {
+            movimientoNombre: ctx.wizard.state.incomeName,
+            movimientoMonto: ctx.wizard.state.incomeAmount,
+            movimientoTipoNombre: [ctx.wizard.state.movementTypeName],
+            movimientoCuentaId: ctx.wizard.state.accountId,
+            movimientoFechaActual: await getTodayDate(),
+            movimientoMesActualId: await getCurrentMonth(),
+            movimientoTipoIO: movementTypeIOOptions.Ingreso,
+            movimientoImagen: movementImageOptions.Ingreso
         };
 
-        await AgregarRegistroNuevo(ctx, movimientoData);
+        await createNewMovement(incomeData);
         await ctx.reply('Ingreso registrado exitosamente.');
 
         return ctx.scene.leave();
-    },
-);
+    }
 
-export default INGRESO_DATA_WIZARD;
+    async getMovementTypes() {
+        const databaseId = dbOptions.dbFlujoPlata;
+        
+        const response = await retrieveDatabase(databaseId, {});
+        let i = 0
+        return response.properties.Tipo.multi_select.options.map(result => ({
+            indes: i += 1,
+            id: result.id,
+            name: result.name
+        }));
+    }
+
+    formatMovementTypes(movementTypes) {
+        return movementTypes.map((type, index) => `${index + 1} - ${type.name}`).join('\n');
+    }
+}
+
+const INCOME_WIZARD = new IncomeWizard().scene;
+
+export default INCOME_WIZARD;

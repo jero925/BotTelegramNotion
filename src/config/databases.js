@@ -1,7 +1,7 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-const opcionesDB = {
+const dbOptions = {
     apiKeyNotion: process.env.NOTION_API_KEY,
     dbCalendario: process.env.CALENDARIO_DB_ID,
     dbMetPago: process.env.MET_PAGO_DB_ID,
@@ -12,4 +12,4 @@ const opcionesDB = {
     dbGastosViaje: process.env.GASTOS_VIAJES_DB_ID,
 };
 
-export default opcionesDB;
+export default dbOptions;
