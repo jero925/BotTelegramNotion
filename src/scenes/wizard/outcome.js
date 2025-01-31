@@ -1,34 +1,38 @@
 import { Scenes, Markup } from 'telegraf';
+import dbOptions from '../../config/databases.js';
+import { movementTypeIOOptions, movementImageOptions } from '../../config/movements.js';
+import { retrieveDatabase } from '../../services/notion-service.js';
+import { getCurrentMonth } from '../../services/month-service.js';
+import { getPaymentAccounts } from '../../services/account-service.js';
+import { createNewMovement } from '../../services/movement-service.js';
+import { getActivePayments } from '../../services/installment-service.js';
+import { getTodayDate } from '../../utils/dates.js';
 
-import opcionesDB from '../../config/databases.js';
-import { ObtenerFechaHoy } from '../../utils/dates.js';
-import { opcionesMovimientoTipoIO, opcionesMovimientoImagen } from '../../config/movements.js';
+class ExpenseWizard {
+    constructor() {
+        this.scene = new Scenes.WizardScene(
+            'CREATE_NEW_EXPENSE',
+            this.askIfInstallment.bind(this),
+            this.processInstallmentResponse.bind(this),
+            this.processInstallmentIndexOrRedirect.bind(this),
+            this.saveAccountAndRegisterExpense.bind(this),
+            this.saveExpenseNameAndAskForAmount.bind(this),
+            this.saveAmountAndAskForMovementType.bind(this),
+            this.saveMovementTypeAndAskForAccount.bind(this)
+        );
+    }
 
-import {
-    ObtenerTipoGastoIngreso,
-    ObtenerCuentasPagos,
-    ObtenerMesActual,
-    AgregarRegistroNuevo,
-} from '../../notion/notion-functions.js';
-
-import { getActivePayments } from '../../notion/due-payments.js'
-
-const GASTO_DATA_WIZARD = new Scenes.WizardScene(
-    'CREAR_GASTO_NUEVO',
-    // 0
-    async (ctx) => {
-
-        ctx.session.GastoIniciado = false
-        ctx.reply('Es un producto en cuotas?', {
+    async askIfInstallment(ctx) {
+        ctx.session.expenseStarted = false;
+        await ctx.reply('Es un producto en cuotas?', {
             reply_markup: {
-                inline_keyboard: [[{ text: 'Si', callback_data: 'si' }, { text: 'No', callback_data: 'no' }]]
+                inline_keyboard: [[{ text: 'Sí', callback_data: 'yes' }, { text: 'No', callback_data: 'no' }]]
             }
         });
         return ctx.wizard.next();
-    },
+    }
 
-    // 1 - Procesa la respuesta sobre cuotas
-    async (ctx) => {
+    async processInstallmentResponse(ctx) {
         const { data } = ctx.callbackQuery;
 
         if (!data) {
@@ -36,169 +40,171 @@ const GASTO_DATA_WIZARD = new Scenes.WizardScene(
             return ctx.scene.leave();
         }
 
-        if (data === 'si') {
-            const resultCuotas = await getActivePayments();
-            const { cuotasActivasColeccion, listaCuotasActivas } = resultCuotas;
+        if (data === 'yes') {
+            const activeInstallments = await getActivePayments();
+            const { activeInstallmentsCollection, activeInstallmentsList } = activeInstallments;
 
-            if (!cuotasActivasColeccion || cuotasActivasColeccion.length === 0) {
+            if (!activeInstallmentsCollection || activeInstallmentsCollection.length === 0) {
                 await ctx.reply('No hay cuotas activas disponibles.');
                 return ctx.scene.leave();
             }
 
-            ctx.wizard.state.cuotasActivasColeccion = cuotasActivasColeccion;
-            await ctx.reply(`Índices Cuotas activas:\n${listaCuotasActivas}`, Markup.inlineKeyboard([
+            ctx.wizard.state.activeInstallmentsCollection = activeInstallmentsCollection;
+            await ctx.reply(`Índices de cuotas activas:\n${activeInstallmentsList}`, Markup.inlineKeyboard([
                 Markup.button.callback('Pago por cuenta', 'accounts')
             ]));
-            ctx.wizard.state.movimientoTipoNombre = 'Cuota';
+            ctx.wizard.state.movementTypeName = 'Cuota';
             return ctx.wizard.next();
         }
 
         // Si se eligió "No"
         await ctx.reply('Por favor, ingresa el nombre del gasto:');
         return ctx.wizard.selectStep(4);
+    }
 
-    },
-
-    // 2 - Procesa el índice de cuota o redirige a la creación de una nueva cuota
-    async (ctx) => {
-        
+    async processInstallmentIndexOrRedirect(ctx) {
         if (ctx.callbackQuery?.data === 'accounts') {
             return ctx.scene.enter('MASSIVE_PAYMENTS');
         }
-        
-        const { text } = ctx.message;
-        const movimientoCuotaIndice = parseInt(text, 10);
 
-        if (movimientoCuotaIndice === 0) {
-            ctx.session.GastoIniciado = true;
-            return ctx.scene.enter('CREAR_CUOTA_NUEVA');
+        const { text } = ctx.message;
+        const installmentIndex = parseInt(text, 10);
+
+        if (installmentIndex === 0) {
+            ctx.session.expenseStarted = true;
+            return ctx.scene.enter('CREATE_NEW_INSTALLMENT');
         }
 
-        const cuotasActivasColeccion = ctx.wizard.state.cuotasActivasColeccion;
-        const cuotaSeleccionada = cuotasActivasColeccion[movimientoCuotaIndice];
+        const activeInstallmentsCollection = ctx.wizard.state.activeInstallmentsCollection;
+        const selectedInstallment = activeInstallmentsCollection[installmentIndex];
 
-        if (!cuotaSeleccionada) {
+        if (!selectedInstallment) {
             await ctx.reply('Índice de cuota inválido. Por favor, elige un índice válido.');
             return ctx.scene.leave();
         }
 
-        ctx.wizard.state.movimientoCuotaId = cuotaSeleccionada.cuotaId;
-        ctx.wizard.state.movimientoNombre = `Cuota ${cuotaSeleccionada?.cuotasPagadas + 1} ${cuotaSeleccionada?.cuotaNombre}`;
-        ctx.wizard.state.movimientoMonto = cuotaSeleccionada?.cuotaMonto;
+        ctx.wizard.state.installmentId = selectedInstallment.installmentId;
+        ctx.wizard.state.expenseName = `Cuota ${selectedInstallment?.paidInstallments + 1} ${selectedInstallment?.installmentName}`;
+        ctx.wizard.state.expenseAmount = selectedInstallment?.installmentAmount;
 
-        const resultCuentas = await ObtenerCuentasPagos();
-        const { accountsData, accountsList } = resultCuentas;
+        const paymentAccounts = await getPaymentAccounts();
+        const { accountsData, accountsList } = paymentAccounts;
 
         if (!accountsData || accountsData.length === 0) {
             await ctx.reply('No se encontraron cuentas. Intenta nuevamente más tarde.');
             return ctx.scene.leave();
         }
 
-        ctx.wizard.state.cuentasPagosColeccion = accountsData;
+        ctx.wizard.state.paymentAccounts = accountsData;
         await ctx.reply(`Cuentas disponibles:\n${accountsList}`);
         await ctx.reply('¿Con qué cuenta se va a realizar el pago?');
         return ctx.wizard.selectStep(3);
-    },
+    }
 
-    // 3 - Guarda la cuenta seleccionada y crea el registro
-    async (ctx) => {
-        const cuentasPagosColeccion = ctx.wizard.state.cuentasPagosColeccion;
+    async saveAccountAndRegisterExpense(ctx) {
+        const paymentAccounts = ctx.wizard.state.paymentAccounts;
 
-        if (!cuentasPagosColeccion) {
+        if (!paymentAccounts) {
             await ctx.reply('Ocurrió un error al obtener las cuentas. Intenta nuevamente más tarde.');
             return ctx.scene.leave();
         }
 
-        const movimientoCuentaIndice = parseInt(ctx.message.text, 10) - 1;
-        const cuentaSeleccionada = cuentasPagosColeccion[movimientoCuentaIndice];
+        const accountIndex = parseInt(ctx.message.text, 10) - 1;
+        const selectedAccount = paymentAccounts[accountIndex];
 
-        if (!cuentaSeleccionada) {
+        if (!selectedAccount) {
             await ctx.reply('Índice de cuenta inválido. Por favor, selecciona una cuenta válida.');
             return ctx.scene.leave();
         }
 
-        ctx.wizard.state.movimientoCuentaId = cuentaSeleccionada?.cuentaId;
-        const WizardState = ctx.wizard.state;
+        ctx.wizard.state.accountId = selectedAccount?.accountId;
 
-        const movimientoData = {
-            movimientoTipoIO: opcionesMovimientoTipoIO?.Gasto,
-            movimientoImagen: opcionesMovimientoImagen?.Gasto,
-            movimientoCuotaId: WizardState?.movimientoCuotaId,
-            movimientoNombre: WizardState?.movimientoNombre,
-            movimientoMonto: WizardState?.movimientoMonto,
-            movimientoTipoNombre: WizardState?.movimientoTipoNombre,
-            movimientoCuentaId: WizardState?.movimientoCuentaId,
-            movimientoFechaActual: await ObtenerFechaHoy(),
-            movimientoMesActualId: await ObtenerMesActual()
+        const expenseData = {
+            movimientoTipoIO: movementTypeIOOptions.Gasto,
+            movimientoImagen: movementImageOptions.Gasto,
+            movimientoCuotaId: ctx.wizard.state.installmentId,
+            movimientoNombre: ctx.wizard.state.expenseName,
+            movimientoMonto: ctx.wizard.state.expenseAmount,
+            movimientoTipoNombre: ctx.wizard.state.movementTypeName,
+            movimientoCuentaId: ctx.wizard.state.accountId,
+            movimientoFechaActual: await getTodayDate(),
+            movimientoMesActualId: await getCurrentMonth()
         };
 
-        await AgregarRegistroNuevo(ctx, movimientoData);
+        await createNewMovement(expenseData);
+        await ctx.reply('Gasto registrado exitosamente.');
         return ctx.scene.leave();
-    },
+    }
 
-    // 4 - Guarda el nombre y pregunta por el monto (compartido con INGRESO)
-    async (ctx) => {
-        ctx.wizard.state.movimientoNombre = ctx.message.text;
+    async saveExpenseNameAndAskForAmount(ctx) {
+        ctx.wizard.state.expenseName = ctx.message.text;
         await ctx.reply('Por favor, ingresa el monto:');
         return ctx.wizard.next();
-    },
+    }
 
-    // 5 - Guarda el monto y pregunta el tipo de movimiento (compartido con INGRESO)
-    async (ctx) => {
-        const monto = parseFloat(ctx.message.text);
+    async saveAmountAndAskForMovementType(ctx) {
+        const amount = parseFloat(ctx.message.text);
 
-        if (isNaN(monto) || monto <= 0) {
+        if (isNaN(amount) || amount <= 0) {
             await ctx.reply('Por favor, ingresa un monto válido.');
             return;
         }
 
-        ctx.wizard.state.movimientoMonto = monto;
+        ctx.wizard.state.expenseAmount = amount;
 
-        const resultTiposGasto = await ObtenerTipoGastoIngreso(opcionesDB.dbFlujoPlata);
+        const movementTypes = await this.getMovementTypes();
 
-        if (!resultTiposGasto || !resultTiposGasto.tiposGastoIngresoColeccion) {
+        if (!movementTypes || movementTypes.length === 0) {
             await ctx.reply('Ocurrió un error al obtener los tipos de gasto. Intenta nuevamente más tarde.');
             return ctx.scene.leave();
         }
 
-        const { listaGastoTipos, tiposGastoIngresoColeccion } = resultTiposGasto;
+        ctx.wizard.state.movementTypes = movementTypes;
 
-        ctx.wizard.state.tiposGastoIngresoColeccion = tiposGastoIngresoColeccion;
-
-        await ctx.reply(`Índice del Tipo de Movimiento:\n${listaGastoTipos}`);
+        await ctx.reply(`Índice del Tipo de Movimiento:\n${this.formatMovementTypes(movementTypes)}`);
         return ctx.wizard.next();
-    },
+    }
 
+    async saveMovementTypeAndAskForAccount(ctx) {
+        const movementTypeIndex = parseInt(ctx.message.text, 10) - 1;
+        const movementTypes = ctx.wizard.state.movementTypes;
 
-    async (ctx) => {
-        const { text } = ctx.message;
-        const movimientoTipoIndice = parseInt(text, 10) - 1;
-
-        if (isNaN(movimientoTipoIndice) || movimientoTipoIndice < 0) {
+        if (isNaN(movementTypeIndex) || movementTypeIndex < 0) {
             await ctx.reply('Índice de tipo de movimiento inválido. Por favor, elige un tipo válido.');
             return;
         }
 
-        const tiposGastoIngresoColeccion = ctx.wizard.state.tiposGastoIngresoColeccion;
+        ctx.wizard.state.movementTypeName = movementTypes[movementTypeIndex]?.name;
 
-        if (!tiposGastoIngresoColeccion) {
-            await ctx.reply('Ocurrió un error al obtener los tipos de gasto. Intenta nuevamente más tarde.');
-            return ctx.scene.leave();
-        }
+        const paymentAccounts = await getPaymentAccounts();
 
-        ctx.wizard.state.movimientoTipoNombre = tiposGastoIngresoColeccion[movimientoTipoIndice]?.tipoGastoNombre;
-        const resultCuentas = await ObtenerCuentasPagos();
-
-        if (!resultCuentas) {
+        if (!paymentAccounts || !paymentAccounts.accountsData || paymentAccounts.accountsData.length === 0) {
             await ctx.reply('Ocurrió un error al obtener las cuentas. Intenta nuevamente más tarde.');
             return ctx.scene.leave();
         }
 
-        ctx.wizard.state.cuentasPagosColeccion = resultCuentas.accountsData;
-        await ctx.reply(`Cuentas:\n${resultCuentas.accountsList}`);
+        ctx.wizard.state.paymentAccounts = paymentAccounts.accountsData;
+        await ctx.reply(`Cuentas:\n${paymentAccounts.accountsList}`);
         await ctx.reply('¿Con qué se paga?');
 
         return ctx.wizard.selectStep(3);
-    });
+    }
 
-export default GASTO_DATA_WIZARD;
+    async getMovementTypes() {
+        const databaseId = dbOptions.dbFlujoPlata;
+        const response = await retrieveDatabase(databaseId);
+        return response.properties.Tipo.multi_select.options.map((option, index) => ({
+            index: index + 1,
+            id: option.id,
+            name: option.name
+        }));
+    }
+
+    formatMovementTypes(movementTypes) {
+        return movementTypes.map((type, index) => `${index + 1} - ${type.name}`).join('\n');
+    }
+}
+
+const EXPENSE_WIZARD = new ExpenseWizard().scene;
+
+export default EXPENSE_WIZARD;

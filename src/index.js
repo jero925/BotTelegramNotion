@@ -2,7 +2,7 @@ import { Telegraf, Scenes, session } from 'telegraf';
 
 import GenerarOpcionesTeclado from './utils/generate_keyboard.js';
 import INCOME_WIZARD from './scenes/wizard/income.js';
-// import GASTO_DATA_WIZARD from './scenes/wizard/outcome.js';
+import EXPENSE_WIZARD from './scenes/wizard/outcome.js';
 // import CUOTA_DATA_WIZARD from './scenes/wizard/payments.js';
 // import TRAVEL_EXPENSE_WIZARD from './scenes/wizard/travel.js';
 // import MASSIVE_PAYMENTS_WIZARD from './scenes/wizard/massive-payments.js';
@@ -19,7 +19,7 @@ session({
 })
 
 const stage = new Stage([
-    // GASTO_DATA_WIZARD, 
+    EXPENSE_WIZARD, 
     INCOME_WIZARD 
     // CUOTA_DATA_WIZARD, 
     // TRAVEL_EXPENSE_WIZARD,
@@ -38,7 +38,7 @@ bot.start((ctx) => {
 });
 
 // Comandos del bot
-bot.command('gasto', Stage.enter('CREAR_GASTO_NUEVO'))
+bot.command('gasto', Stage.enter('CREATE_NEW_EXPENSE'))
 
 bot.command('ingreso', Stage.enter('CREATE_NEW_INCOME'))
 
@@ -54,7 +54,7 @@ bot.hears('🤑 Guita', (ctx) => {
     ctx.reply('Tipo de operacion', keyboard);
 });
 
-bot.hears('↓ Gasto', Stage.enter('CREAR_GASTO_NUEVO'));
+bot.hears('↓ Gasto', Stage.enter('CREATE_NEW_EXPENSE'));
 
 bot.hears('↑ Ingreso', Stage.enter('CREATE_NEW_INCOME'));
 
@@ -64,16 +64,17 @@ bot.help((ctx) => {
 })
 
 bot.launch()
+console.log('Bot initialized');
 
 //Comandos Wizards
 INCOME_WIZARD.command('cancelar', (ctx) => {
     ctx.reply('Saliendo de la escena...')
     return ctx.scene.leave();
 })
-// GASTO_DATA_WIZARD.command('cancelar', (ctx) => {
-//     ctx.reply('Saliendo de la escena...')
-//     return ctx.scene.leave();
-// })
+EXPENSE_WIZARD.command('cancelar', (ctx) => {
+    ctx.reply('Saliendo de la escena...')
+    return ctx.scene.leave();
+})
 // CUOTA_DATA_WIZARD.command('cancelar', (ctx) => {
 //     ctx.reply('Saliendo de la escena...')
 //     return ctx.scene.leave();

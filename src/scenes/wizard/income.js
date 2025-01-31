@@ -1,7 +1,7 @@
 import { Scenes } from 'telegraf';
 import dbOptions from '../../config/databases.js';
 import { movementTypeIOOptions, movementImageOptions } from '../../config/movements.js';
-import { queryDatabase, retrieveDatabase } from '../../services/notion-service.js';
+import { retrieveDatabase } from '../../services/notion-service.js';
 import { getCurrentMonth } from '../../services/month-service.js';
 import { getPaymentAccounts } from '../../services/account-service.js';
 import { createNewMovement } from '../../services/movement-service.js';
