@@ -1,6 +1,6 @@
 import { Scenes, Markup } from 'telegraf';
 import dbOptions from '../../config/databases.js';
-import { movementTypeIOOptions, movementImageOptions } from '../../config/movements.js';
+import { MOVEMENT_TYPES, MOVEMENT_IMAGES } from '../../config/movements.js';
 import { retrieveDatabase } from '../../services/notion-service.js';
 import { getCurrentMonth } from '../../services/month-service.js';
 import { getPaymentAccounts } from '../../services/account-service.js';
@@ -122,8 +122,8 @@ class ExpenseWizard {
         ctx.wizard.state.accountId = selectedAccount?.accountId;
 
         const expenseData = {
-            movimientoTipoIO: movementTypeIOOptions.Gasto,
-            movimientoImagen: movementImageOptions.Gasto,
+            movimientoTipoIO: MOVEMENT_TYPES.Gasto,
+            movimientoImagen: MOVEMENT_IMAGES.Gasto,
             movimientoCuotaId: ctx.wizard.state.installmentId,
             movimientoNombre: ctx.wizard.state.expenseName,
             movimientoMonto: ctx.wizard.state.expenseAmount,

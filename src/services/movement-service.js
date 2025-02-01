@@ -1,6 +1,6 @@
 import { NotionPageFactory } from '../class/notion-page-factory.js';
 import dbOptions from '../config/databases.js';
-import { movementTypeIOOptions } from '../config/movements.js';
+import { MOVEMENT_TYPES } from '../config/movements.js';
 
 export async function createNewMovement(properties) {
     const pageFactory = new NotionPageFactory(dbOptions.dbFlujoPlata);
@@ -14,9 +14,9 @@ export async function createNewMovement(properties) {
         .setMultiSelect('Tipo', properties.movimientoTipoNombre)
         .setSelect('I/O', properties.movimientoTipoIO)
         .setStatus('Estado Suscripcion', 'No sub')
-        .setRelation('Ingreso. Mes Año', properties.movimientoTipoIO === movementTypeIOOptions.Ingreso ? properties.movimientoMesActualId : null)
-        .setNumber('Monto', properties.movimientoTipoIO === movementTypeIOOptions.Gasto ? -properties.movimientoMonto : properties.movimientoMonto)
-        .setRelation('Gasto. Mes Año', properties.movimientoTipoIO === movementTypeIOOptions.Gasto ? properties.movimientoMesActualId : null)
+        .setRelation('Ingreso. Mes Año', properties.movimientoTipoIO === MOVEMENT_TYPES.Ingreso ? properties.movimientoMesActualId : null)
+        .setNumber('Monto', properties.movimientoTipoIO === MOVEMENT_TYPES.Gasto ? -properties.movimientoMonto : properties.movimientoMonto)
+        .setRelation('Gasto. Mes Año', properties.movimientoTipoIO === MOVEMENT_TYPES.Gasto ? properties.movimientoMesActualId : null)
 
     const pageProperties = pageFactory.build();
 
@@ -33,9 +33,9 @@ export async function updateMovement(movementId, properties) {
         .setMultiSelect('Tipo', properties.movimientoTipoNombre)
         .setSelect('I/O', properties.movimientoTipoIO)
         .setStatus('Estado Suscripcion', 'No sub')
-        .setRelation('Ingreso. Mes Año', properties.movimientoTipoIO === movementTypeIOOptions.Ingreso ? properties.movimientoMesActualId : null)
-        .setNumber('Monto', properties.movimientoTipoIO === movementTypeIOOptions.Gasto ? -properties.movimientoMonto : properties.movimientoMonto)
-        .setRelation('Gasto. Mes Año', properties.movimientoTipoIO === movementTypeIOOptions.Gasto ? properties.movimientoMesActualId : null);
+        .setRelation('Ingreso. Mes Año', properties.movimientoTipoIO === MOVEMENT_TYPES.Ingreso ? properties.movimientoMesActualId : null)
+        .setNumber('Monto', properties.movimientoTipoIO === MOVEMENT_TYPES.Gasto ? -properties.movimientoMonto : properties.movimientoMonto)
+        .setRelation('Gasto. Mes Año', properties.movimientoTipoIO === MOVEMENT_TYPES.Gasto ? properties.movimientoMesActualId : null);
 
     const pageProperties = pageFactory.build();
     

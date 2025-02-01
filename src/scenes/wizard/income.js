@@ -1,6 +1,6 @@
 import { Scenes } from 'telegraf';
 import dbOptions from '../../config/databases.js';
-import { movementTypeIOOptions, movementImageOptions } from '../../config/movements.js';
+import { MOVEMENT_TYPES, MOVEMENT_IMAGES } from '../../config/movements.js';
 import { retrieveDatabase } from '../../services/notion-service.js';
 import { getCurrentMonth } from '../../services/month-service.js';
 import { getPaymentAccounts } from '../../services/account-service.js';
@@ -103,8 +103,8 @@ class IncomeWizard {
             movimientoCuentaId: ctx.wizard.state.accountId,
             movimientoFechaActual: await getTodayDate(),
             movimientoMesActualId: await getCurrentMonth(),
-            movimientoTipoIO: movementTypeIOOptions.Ingreso,
-            movimientoImagen: movementImageOptions.Ingreso
+            movimientoTipoIO: MOVEMENT_TYPES.Ingreso,
+            movimientoImagen: MOVEMENT_IMAGES.Ingreso
         };
 
         await createNewMovement(incomeData);

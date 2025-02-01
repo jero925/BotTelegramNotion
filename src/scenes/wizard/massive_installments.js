@@ -1,6 +1,6 @@
 import { Scenes } from 'telegraf';
 import { getTodayDate } from '../../utils/dates.js';
-import { movementTypeIOOptions, movementImageOptions } from '../../config/movements.js';
+import { MOVEMENT_TYPES, MOVEMENT_IMAGES } from '../../config/movements.js';
 import { formatCurrencyUSD } from '../../config/currency.js';
 import { getCurrentMonth } from '../../services/month-service.js';
 import { getActiveCreditCardList, getPaymentAccounts } from '../../services/account-service.js'
@@ -75,8 +75,8 @@ class MassiveInstallmentsWizard {
             addedPayments += `\n${installment?.installmentName} - $${installment?.installmentAmount}`;
 
             const movementData = {
-                movimientoTipoIO: movementTypeIOOptions.Gasto,
-                movimientoImagen: movementImageOptions.Gasto,
+                movimientoTipoIO: MOVEMENT_TYPES.Gasto,
+                movimientoImagen: MOVEMENT_IMAGES.Gasto,
                 movimientoCuotaId: installment.installmentId,
                 movimientoNombre: `Cuota ${installment?.paidInstallments + 1} ${installment?.installmentName}`,
                 movimientoMonto: installment?.installmentAmount,

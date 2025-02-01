@@ -1,6 +1,6 @@
 import { Scenes } from 'telegraf';
 import dbOptions from '../../config/databases.js';
-import { installmentImage } from '../../config/movements.js';
+import { INSTALLMENT_IMAGE } from '../../config/movements.js';
 import { getMonthsInDateRange } from '../../services/month-service.js';
 import { createNewInstallment } from '../../services/installment-service.js';
 import { getTodayDate, getFirstDayOfNextMonth } from '../../utils/dates.js';
@@ -80,7 +80,7 @@ class InstallmentWizard {
         const lastInstallmentDate = await getFirstDayOfNextMonth(todayDate, WizardState.installmentCount);
 
         const installmentData = {
-            installmentImage: installmentImage,
+            installmentImage: INSTALLMENT_IMAGE,
             productName: WizardState.productName,
             todayDate: todayDate,
             amount: WizardState.amount,
