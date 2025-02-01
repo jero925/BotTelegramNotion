@@ -4,7 +4,7 @@ import GenerarOpcionesTeclado from './utils/generate_keyboard.js';
 import INCOME_WIZARD from './scenes/wizard/income.js';
 import EXPENSE_WIZARD from './scenes/wizard/outcome.js';
 import INSTALLMENT_WIZARD from './scenes/wizard/installment.js';
-// import TRAVEL_EXPENSE_WIZARD from './scenes/wizard/travel.js';
+import TRAVEL_EXPENSE_WIZARD from './scenes/wizard/travel-expense.js';
 import MASSIVE_INSTALLMENTS_WIZARD from './scenes/wizard/massive_installments.js';
 
 const { Stage } = Scenes
@@ -22,7 +22,7 @@ const stage = new Stage([
     EXPENSE_WIZARD, 
     INCOME_WIZARD,
     INSTALLMENT_WIZARD, 
-    // TRAVEL_EXPENSE_WIZARD,
+    TRAVEL_EXPENSE_WIZARD,
     MASSIVE_INSTALLMENTS_WIZARD
 ], { sessionName: 'chatSession' });
 
