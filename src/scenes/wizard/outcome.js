@@ -5,7 +5,7 @@ import { retrieveDatabase } from '../../services/notion-service.js';
 import { getCurrentMonth } from '../../services/month-service.js';
 import { getPaymentAccounts } from '../../services/account-service.js';
 import { createNewMovement } from '../../services/movement-service.js';
-import { getActivePayments } from '../../services/installment-service.js';
+import { getActiveInstallments } from '../../services/installment-service.js';
 import { getTodayDate } from '../../utils/dates.js';
 
 class ExpenseWizard {
@@ -41,7 +41,7 @@ class ExpenseWizard {
         }
 
         if (data === 'yes') {
-            const activeInstallments = await getActivePayments();
+            const activeInstallments = await getActiveInstallments();
             const { activeInstallmentsCollection, activeInstallmentsList } = activeInstallments;
 
             if (!activeInstallmentsCollection || activeInstallmentsCollection.length === 0) {
@@ -64,7 +64,7 @@ class ExpenseWizard {
 
     async processInstallmentIndexOrRedirect(ctx) {
         if (ctx.callbackQuery?.data === 'accounts') {
-            return ctx.scene.enter('MASSIVE_PAYMENTS');
+            return ctx.scene.enter('MASSIVE_INSTALLMENTS');
         }
 
         const { text } = ctx.message;

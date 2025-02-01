@@ -3,7 +3,7 @@ export function getTodayDate() {
     return new Date().toISOString()
 }
 
-export function ObtenerPrimerDiaMesSiguiente(fechaString, cantidadMeses) {
+export function getFirstDayOfNextMonth(fechaString, cantidadMeses) {
     // Convertir la cadena de texto a un objeto Date
     const fecha = new Date(fechaString);
 

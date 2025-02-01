@@ -3,9 +3,9 @@ import { Telegraf, Scenes, session } from 'telegraf';
 import GenerarOpcionesTeclado from './utils/generate_keyboard.js';
 import INCOME_WIZARD from './scenes/wizard/income.js';
 import EXPENSE_WIZARD from './scenes/wizard/outcome.js';
-// import CUOTA_DATA_WIZARD from './scenes/wizard/payments.js';
+import INSTALLMENT_WIZARD from './scenes/wizard/installment.js';
 // import TRAVEL_EXPENSE_WIZARD from './scenes/wizard/travel.js';
-// import MASSIVE_PAYMENTS_WIZARD from './scenes/wizard/massive-payments.js';
+import MASSIVE_INSTALLMENTS_WIZARD from './scenes/wizard/massive_installments.js';
 
 const { Stage } = Scenes
 
@@ -20,10 +20,10 @@ session({
 
 const stage = new Stage([
     EXPENSE_WIZARD, 
-    INCOME_WIZARD 
-    // CUOTA_DATA_WIZARD, 
+    INCOME_WIZARD,
+    INSTALLMENT_WIZARD, 
     // TRAVEL_EXPENSE_WIZARD,
-    // MASSIVE_PAYMENTS_WIZARD,
+    MASSIVE_INSTALLMENTS_WIZARD
 ], { sessionName: 'chatSession' });
 
 bot.use(session()); // to  be precise, session is not a must have for Scenes to work, but it sure is lonely without one
@@ -42,7 +42,7 @@ bot.command('gasto', Stage.enter('CREATE_NEW_EXPENSE'))
 
 bot.command('ingreso', Stage.enter('CREATE_NEW_INCOME'))
 
-bot.command('cuotas', Stage.enter('CREAR_CUOTA_NUEVA'))
+bot.command('cuotas', Stage.enter('CREATE_NEW_INSTALLMENT'))
 
 bot.command('viaje', Stage.enter('CREATE_TRAVEL_EXPENSE'))
 
@@ -75,7 +75,7 @@ EXPENSE_WIZARD.command('cancelar', (ctx) => {
     ctx.reply('Saliendo de la escena...')
     return ctx.scene.leave();
 })
-// CUOTA_DATA_WIZARD.command('cancelar', (ctx) => {
-//     ctx.reply('Saliendo de la escena...')
-//     return ctx.scene.leave();
-// })
+INSTALLMENT_WIZARD.command('cancelar', (ctx) => {
+    ctx.reply('Saliendo de la escena...')
+    return ctx.scene.leave();
+})

@@ -9,4 +9,4 @@ export const movementImageOptions = {
     Gasto: 'https://www.notion.so/icons/downward_red.svg'
 }
 
-export const cuotaImagen = 'https://www.notion.so/icons/credit-card_gray.svg'
+export const installmentImage = 'https://www.notion.so/icons/credit-card_gray.svg'
