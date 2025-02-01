@@ -6,6 +6,10 @@ export async function getPaymentAccounts() {
 }
 
 export async function getCreditCardList() {
+    return await getAccounts({ property: "Tipo", select: { equals: "Tarjeta" } });
+}
+
+export async function getActiveCreditCardList() {
     const filters = {
         and: [
             { property: "Tipo", select: { equals: "Tarjeta" } },

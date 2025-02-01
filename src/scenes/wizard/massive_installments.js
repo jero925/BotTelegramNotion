@@ -3,7 +3,7 @@ import { getTodayDate } from '../../utils/dates.js';
 import { movementTypeIOOptions, movementImageOptions } from '../../config/movements.js';
 import { formatCurrencyUSD } from '../../config/currency.js';
 import { getCurrentMonth } from '../../services/month-service.js';
-import { getCreditCardList, getPaymentAccounts } from '../../services/account-service.js'
+import { getActiveCreditCardList, getPaymentAccounts } from '../../services/account-service.js'
 import { createNewMovement } from '../../services/movement-service.js';
 import { getActiveInstallmentsByCard } from '../../services/installment-service.js';
 
@@ -18,7 +18,7 @@ class MassiveInstallmentsWizard {
     }
 
     async getCreditCardsWithPendingInstallments(ctx) {
-        const { accountsList, accountsData } = await getCreditCardList();
+        const { accountsList, accountsData } = await getActiveCreditCardList();
         ctx.wizard.state.creditCardsData = accountsData;
         await ctx.reply(`Tarjetas:\n${accountsList}`);
         return ctx.wizard.next();

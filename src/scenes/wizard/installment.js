@@ -4,6 +4,7 @@ import { installmentImage } from '../../config/movements.js';
 import { getMonthsInDateRange } from '../../services/month-service.js';
 import { createNewInstallment } from '../../services/installment-service.js';
 import { getTodayDate, getFirstDayOfNextMonth } from '../../utils/dates.js';
+import { getCreditCardList } from '../../services/account-service.js'
 
 class InstallmentWizard {
     constructor() {
@@ -12,7 +13,8 @@ class InstallmentWizard {
             this.askForProductName.bind(this),
             this.saveProductNameAndAskForAmount.bind(this),
             this.saveAmountAndAskForInstallmentCount.bind(this),
-            this.saveInstallmentCountAndCreateInstallment.bind(this)
+            this.saveInstallmentCountAndAskCreditCard.bind(this),
+            this.saveCreditCardAndCreateInstallment.bind(this)
         );
     }
 
@@ -47,7 +49,7 @@ class InstallmentWizard {
         return ctx.wizard.next();
     }
 
-    async saveInstallmentCountAndCreateInstallment(ctx) {
+    async saveInstallmentCountAndAskCreditCard(ctx) {
         const installmentCount = parseInt(ctx.message.text, 10);
 
         if (isNaN(installmentCount) || installmentCount <= 0) {
@@ -55,22 +57,40 @@ class InstallmentWizard {
             return;
         }
 
+        ctx.wizard.state.installmentCount = installmentCount.toString()
+        const { accountsList, accountsData } = await getCreditCardList();
+        ctx.wizard.state.creditCardsData = accountsData;
+        await ctx.reply(`Tarjetas:\n${accountsList}`);
+        return ctx.wizard.next();
+    }
+
+    async saveCreditCardAndCreateInstallment(ctx) {
+        const cardIndex = parseInt(ctx.message.text, 10) - 1;
+
+        if (isNaN(cardIndex) || cardIndex < 0) {
+            await ctx.reply('Índice de tarjeta inválido. Por favor, elige una tarjeta válida.');
+            return ctx.scene.leave();
+        }
+
         const WizardState = ctx.wizard.state;
         const todayDate = await getTodayDate();
         const firstInstallmentDate = await getFirstDayOfNextMonth(todayDate, 1);
-        const lastInstallmentDate = await getFirstDayOfNextMonth(todayDate, installmentCount);
+        
+        
+        const lastInstallmentDate = await getFirstDayOfNextMonth(todayDate, WizardState.installmentCount);
 
         const installmentData = {
             installmentImage: installmentImage,
             productName: WizardState.productName,
             todayDate: todayDate,
             amount: WizardState.amount,
-            installmentCount: installmentCount,
+            installmentCount: WizardState.installmentCount,
             firstInstallmentDate: firstInstallmentDate,
-            months: await getMonthsInDateRange(dbOptions.dbMeses, firstInstallmentDate, lastInstallmentDate)
+            months: await getMonthsInDateRange(dbOptions.dbMeses, firstInstallmentDate, lastInstallmentDate),
+            cardId: WizardState.creditCardsData[cardIndex]?.accountId
         };
 
-        await createNewInstallment(dbOptions.dbCuotas, installmentData);
+        await createNewInstallment(installmentData);
         await ctx.reply('Producto en cuotas agregado exitosamente.');
 
         return ctx.scene.leave();
