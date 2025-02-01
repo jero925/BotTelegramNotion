@@ -1,6 +1,7 @@
 import { Scenes } from 'telegraf';
 import { createTravelExpense } from '../../services/travel-expense-service.js';
-import { getCurrentTravel, getTravelExpenseTypes } from '../../services/travel-service.js';
+import { getCurrentTravel, getTravelExpenseTypes, getActualTravelPeople } from '../../services/travel-service.js';
+import CustomKeyboard from '../../class/keyboard.js'
 
 class TravelExpenseWizard {
     constructor() {
@@ -39,9 +40,12 @@ class TravelExpenseWizard {
             await ctx.reply('Por favor, ingresa un monto válido.');
             return;
         }
-
         ctx.wizard.state.expenseAmount = amount;
-        await ctx.reply('¿Quién paga?');
+
+        const people = await getActualTravelPeople();
+        const inlineKeyboard = CustomKeyboard.generateKeyboardFromOptions(people, 2);
+        await ctx.reply('¿Quién paga?', inlineKeyboard);
+
         return ctx.wizard.next();
     }
 

@@ -7,6 +7,7 @@ import { getPaymentAccounts } from '../../services/account-service.js';
 import { createNewMovement } from '../../services/movement-service.js';
 import { getActiveInstallments } from '../../services/installment-service.js';
 import { getTodayDate } from '../../utils/dates.js';
+import CustomKeyboard from '../../class/keyboard.js'
 
 class ExpenseWizard {
     constructor() {
@@ -24,11 +25,12 @@ class ExpenseWizard {
 
     async askIfInstallment(ctx) {
         ctx.session.expenseStarted = false;
-        await ctx.reply('Es un producto en cuotas?', {
-            reply_markup: {
-                inline_keyboard: [[{ text: 'Sí', callback_data: 'yes' }, { text: 'No', callback_data: 'no' }]]
-            }
-        });
+        const inlineOptions = [
+            { text: 'Si', callback_data: 'yes' },
+            { text: 'No', callback_data: 'no' }
+        ];
+        const inlineKeyboard = CustomKeyboard.generateKeyboardFromOptions(inlineOptions, 2, true);
+        await ctx.reply('Es un producto en cuotas?', inlineKeyboard);
         return ctx.wizard.next();
     }
 

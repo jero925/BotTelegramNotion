@@ -25,3 +25,16 @@ export async function getActiveTravels() {
     });
     return response.results;
 }
+
+export async function getActualTravelPeople() {
+    const currentTravel = await getCurrentTravel();
+    if (currentTravel.length === 0) {
+        throw new Error('No se encontró un viaje actual.');
+    }
+
+    const travel = currentTravel[0];
+    const people = travel.properties.Personas?.multi_select || [];
+    const peopleList = people.map((person) => person.name);
+
+    return peopleList;
+}

@@ -1,6 +1,6 @@
 import { Telegraf, Scenes, session } from 'telegraf';
 
-import GenerarOpcionesTeclado from './utils/generate_keyboard.js';
+import CustomKeyboard from './class/keyboard.js';
 import INCOME_WIZARD from './scenes/wizard/income.js';
 import EXPENSE_WIZARD from './scenes/wizard/outcome.js';
 import INSTALLMENT_WIZARD from './scenes/wizard/installment.js';
@@ -33,7 +33,7 @@ bot.use(stage.middleware());
 bot.start((ctx) => {
     // Configura opciones del teclado
     const opTecladoInicio = ['🤑 Guita', 'Opción 2', 'Opción 3', 'Opción 4']
-    let keyboard = GenerarOpcionesTeclado(opTecladoInicio)
+    let keyboard = CustomKeyboard.generateKeyboardFromOptions(opTecladoInicio, 4)
     ctx.reply('Hola kpo', keyboard);
 });
 
@@ -48,8 +48,8 @@ bot.command('viaje', Stage.enter('CREATE_TRAVEL_EXPENSE'))
 
 // Escuchar opciones de texto
 bot.hears('🤑 Guita', (ctx) => {
-    let opTecladoGuita = ['↓ Gasto', '↑ Ingreso']
-    let keyboard = GenerarOpcionesTeclado(opTecladoGuita)
+    let keyboardOptions = ['↓ Gasto', '↑ Ingreso']
+    let keyboard = CustomKeyboard.generateKeyboardFromOptions(keyboardOptions)
 
     ctx.reply('Tipo de operacion', keyboard);
 });
