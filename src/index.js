@@ -1,5 +1,4 @@
 import { Telegraf, Scenes, session } from 'telegraf';
-
 import CustomKeyboard from './class/keyboard.js';
 import INCOME_WIZARD from './scenes/wizard/income.js';
 import EXPENSE_WIZARD from './scenes/wizard/outcome.js';
@@ -7,75 +6,89 @@ import INSTALLMENT_WIZARD from './scenes/wizard/installment.js';
 import TRAVEL_EXPENSE_WIZARD from './scenes/wizard/travel-expense.js';
 import MASSIVE_INSTALLMENTS_WIZARD from './scenes/wizard/massive_installments.js';
 
-const { Stage } = Scenes
+const { Stage } = Scenes;
 
+// Constants for better readability
+const START_KEYBOARD_OPTIONS = ['🤑 Guita', 'Opción 2', 'Opción 3', 'Opción 4'];
+const MONEY_KEYBOARD_OPTIONS = ['↓ Gasto', '↑ Ingreso'];
+const COMMANDS = {
+    EXPENSE: 'gasto',
+    INCOME: 'ingreso',
+    INSTALLMENT: 'cuotas',
+    TRAVEL: 'viaje',
+    HELP: 'help'
+};
+const WIZARD_SCENES = {
+    EXPENSE: 'CREATE_NEW_EXPENSE',
+    INCOME: 'CREATE_NEW_INCOME',
+    INSTALLMENT: 'CREATE_NEW_INSTALLMENT',
+    TRAVEL_EXPENSE: 'CREATE_TRAVEL_EXPENSE',
+    MASSIVE_INSTALLMENTS: 'MASSIVE_INSTALLMENTS'
+};
 
-// Crear instancias del bot y el cliente de Notion
+// Define the bot's custom commands
+const BOT_COMMANDS = [
+    { command: COMMANDS.EXPENSE, description: 'Register a new expense' },
+    { command: COMMANDS.INCOME, description: 'Register a new income' },
+    { command: COMMANDS.INSTALLMENT, description: 'Register a new installment' },
+    { command: COMMANDS.TRAVEL, description: 'Register a travel expense' },
+    { command: COMMANDS.HELP, description: 'Get help about the bot' }
+];
+
+// Create bot instance
 const bot = new Telegraf(process.env.BOT_TOKEN);
 
+// Session configuration
 session({
     property: 'chatSession',
     getSessionKey: (ctx) => ctx.chat && ctx.chat.id
-})
+});
 
-const stage = new Stage([
-    EXPENSE_WIZARD, 
-    INCOME_WIZARD,
-    INSTALLMENT_WIZARD, 
-    TRAVEL_EXPENSE_WIZARD,
-    MASSIVE_INSTALLMENTS_WIZARD
-], { sessionName: 'chatSession' });
+// Scenes configuration
+const WIZARDS = [INCOME_WIZARD, EXPENSE_WIZARD, INSTALLMENT_WIZARD, TRAVEL_EXPENSE_WIZARD, MASSIVE_INSTALLMENTS_WIZARD];
+const stage = new Stage(WIZARDS, { sessionName: 'chatSession' });
 
-bot.use(session()); // to  be precise, session is not a must have for Scenes to work, but it sure is lonely without one
+// Middleware
+bot.use(session());
 bot.use(stage.middleware());
 
-//Configuracion inicial del bot
+// Set custom commands for the bot
+bot.telegram.setMyCommands(BOT_COMMANDS);
+
+// Start command
 bot.start((ctx) => {
-    // Configura opciones del teclado
-    const opTecladoInicio = ['🤑 Guita', 'Opción 2', 'Opción 3', 'Opción 4']
-    let keyboard = CustomKeyboard.generateKeyboardFromOptions(opTecladoInicio, 4)
+    const keyboard = CustomKeyboard.generateKeyboardFromOptions(START_KEYBOARD_OPTIONS, 4);
     ctx.reply('Hola kpo', keyboard);
 });
 
-// Comandos del bot
-bot.command('gasto', Stage.enter('CREATE_NEW_EXPENSE'))
+// Commands
+bot.command(COMMANDS.EXPENSE, Stage.enter(WIZARD_SCENES.EXPENSE));
+bot.command(COMMANDS.INCOME, Stage.enter(WIZARD_SCENES.INCOME));
+bot.command(COMMANDS.INSTALLMENT, Stage.enter(WIZARD_SCENES.INSTALLMENT));
+bot.command(COMMANDS.TRAVEL, Stage.enter(WIZARD_SCENES.TRAVEL_EXPENSE));
 
-bot.command('ingreso', Stage.enter('CREATE_NEW_INCOME'))
-
-bot.command('cuotas', Stage.enter('CREATE_NEW_INSTALLMENT'))
-
-bot.command('viaje', Stage.enter('CREATE_TRAVEL_EXPENSE'))
-
-// Escuchar opciones de texto
-bot.hears('🤑 Guita', (ctx) => {
-    let keyboardOptions = ['↓ Gasto', '↑ Ingreso']
-    let keyboard = CustomKeyboard.generateKeyboardFromOptions(keyboardOptions)
-
+// Hears
+bot.hears(START_KEYBOARD_OPTIONS[0], (ctx) => {
+    const keyboard = CustomKeyboard.generateKeyboardFromOptions(MONEY_KEYBOARD_OPTIONS);
     ctx.reply('Tipo de operacion', keyboard);
 });
 
-bot.hears('↓ Gasto', Stage.enter('CREATE_NEW_EXPENSE'));
+bot.hears(MONEY_KEYBOARD_OPTIONS[0], Stage.enter(WIZARD_SCENES.EXPENSE));
+bot.hears(MONEY_KEYBOARD_OPTIONS[1], Stage.enter(WIZARD_SCENES.INCOME));
 
-bot.hears('↑ Ingreso', Stage.enter('CREATE_NEW_INCOME'));
-
-//Ayuda del bot
+// Help command
 bot.help((ctx) => {
-    ctx.reply('Yo te ayudo master, WIP')
-})
+    ctx.reply('Yo te ayudo master, WIP');
+});
 
-bot.launch()
+// Cancel command for all wizards
+WIZARDS.forEach(wizard => {
+    wizard.command('cancelar', (ctx) => {
+        ctx.reply('Saliendo de la escena...');
+        return ctx.scene.leave();
+    });
+});
+
+// Launch the bot
+bot.launch();
 console.log('Bot initialized');
-
-//Comandos Wizards
-INCOME_WIZARD.command('cancelar', (ctx) => {
-    ctx.reply('Saliendo de la escena...')
-    return ctx.scene.leave();
-})
-EXPENSE_WIZARD.command('cancelar', (ctx) => {
-    ctx.reply('Saliendo de la escena...')
-    return ctx.scene.leave();
-})
-INSTALLMENT_WIZARD.command('cancelar', (ctx) => {
-    ctx.reply('Saliendo de la escena...')
-    return ctx.scene.leave();
-})
