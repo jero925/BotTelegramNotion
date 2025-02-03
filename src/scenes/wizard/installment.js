@@ -1,21 +1,22 @@
-import { Scenes } from 'telegraf';
+import { BaseWizard } from '../../class/base-wizard.js';
 import dbOptions from '../../config/databases.js';
 import { INSTALLMENT_IMAGE } from '../../config/movements.js';
 import { getMonthsInDateRange } from '../../services/month-service.js';
 import { createNewInstallment } from '../../services/installment-service.js';
 import { getTodayDate, getFirstDayOfNextMonth } from '../../utils/dates.js';
-import { getCreditCardList } from '../../services/account-service.js'
+import { getCreditCardList } from '../../services/account-service.js';
 
-class InstallmentWizard {
+class InstallmentWizard extends BaseWizard {
     constructor() {
-        this.scene = new Scenes.WizardScene(
-            'CREATE_NEW_INSTALLMENT',
-            this.askForProductName.bind(this),
-            this.saveProductNameAndAskForAmount.bind(this),
-            this.saveAmountAndAskForInstallmentCount.bind(this),
-            this.saveInstallmentCountAndAskCreditCard.bind(this),
-            this.saveCreditCardAndCreateInstallment.bind(this)
-        );
+        const stepDefinitions = [
+            { name: 'NAME', handler: 'askForProductName' },
+            { name: 'AMOUNT', handler: 'saveProductNameAndAskForAmount' },
+            { name: 'INSTALLMENT_COUNT', handler: 'saveAmountAndAskForInstallmentCount' },
+            { name: 'CREDIT_CARD', handler: 'saveInstallmentCountAndAskCreditCard' },
+            { name: 'CREATE_INSTALLMENT', handler: 'saveCreditCardAndCreateInstallment' }
+        ];
+        const steps = InstallmentWizard.buildSteps(stepDefinitions);
+        super('CREATE_NEW_INSTALLMENT', steps);
     }
 
     async askForProductName(ctx) {
@@ -57,7 +58,7 @@ class InstallmentWizard {
             return;
         }
 
-        ctx.wizard.state.installmentCount = installmentCount.toString()
+        ctx.wizard.state.installmentCount = installmentCount.toString();
         const { accountsList, accountsData } = await getCreditCardList();
         ctx.wizard.state.creditCardsData = accountsData;
         await ctx.reply(`Tarjetas:\n${accountsList}`);
@@ -75,8 +76,6 @@ class InstallmentWizard {
         const WizardState = ctx.wizard.state;
         const todayDate = await getTodayDate();
         const firstInstallmentDate = await getFirstDayOfNextMonth(todayDate, 1);
-        
-        
         const lastInstallmentDate = await getFirstDayOfNextMonth(todayDate, WizardState.installmentCount);
 
         const installmentData = {

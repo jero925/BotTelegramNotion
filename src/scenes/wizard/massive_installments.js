@@ -1,20 +1,22 @@
-import { Scenes } from 'telegraf';
+import { BaseWizard } from '../../class/base-wizard.js';
 import { getTodayDate } from '../../utils/dates.js';
 import { MOVEMENT_TYPES, MOVEMENT_IMAGES } from '../../config/movements.js';
 import { formatCurrencyUSD } from '../../config/currency.js';
 import { getCurrentMonth } from '../../services/month-service.js';
-import { getActiveCreditCardList, getPaymentAccounts } from '../../services/account-service.js'
+import { getActiveCreditCardList, getPaymentAccounts } from '../../services/account-service.js';
 import { createNewMovement } from '../../services/movement-service.js';
 import { getActiveInstallmentsByCard } from '../../services/installment-service.js';
 
-class MassiveInstallmentsWizard {
+class MassiveInstallmentsWizard extends BaseWizard {
     constructor() {
-        this.scene = new Scenes.WizardScene(
-            'MASSIVE_INSTALLMENTS',
-            this.getCreditCardsWithPendingInstallments.bind(this),
-            this.saveCardIndexAndGetPaymentAccount.bind(this),
-            this.saveAccountIndexAndCreateRegisters.bind(this)
-        );
+        const stepDefinitions = [
+            { name: 'GET_CREDIT_CARDS', handler: 'getCreditCardsWithPendingInstallments' },
+            { name: 'SAVE_CARD_INDEX_AND_GET_ACCOUNT', handler: 'saveCardIndexAndGetPaymentAccount' },
+            { name: 'SAVE_ACCOUNT_INDEX_AND_CREATE_REGISTERS', handler: 'saveAccountIndexAndCreateRegisters' }
+        ];
+        const steps = MassiveInstallmentsWizard.buildSteps(stepDefinitions);
+        
+        super('MASSIVE_INSTALLMENTS', steps);
     }
 
     async getCreditCardsWithPendingInstallments(ctx) {
@@ -35,6 +37,7 @@ class MassiveInstallmentsWizard {
         ctx.wizard.state.cardIndex = cardIndex;
 
         const { accountsList, accountsData } = await getPaymentAccounts();
+        
         ctx.wizard.state.paymentAccountsData = accountsData;
         await ctx.reply('¿Con qué se paga?');
         await ctx.reply(`Cuentas:\n${accountsList}`);
@@ -53,10 +56,10 @@ class MassiveInstallmentsWizard {
         const WizardState = ctx.wizard.state;
         const accountId = WizardState.paymentAccountsData[accountIndex]?.accountId;
         const cardId = WizardState.creditCardsData[WizardState.cardIndex]?.accountId;
-
+        
         const { activeInstallmentsCollection } = await getActiveInstallmentsByCard(cardId);
-
-        if (!activeInstallmentsCollection || activeInstallmentsCollection.length === 0) {
+        
+        if (!activeInstallmentsCollection || !activeInstallmentsCollection.length > 1) {
             await ctx.reply('No se han encontrado cuotas pendientes. Saliendo...');
             return ctx.scene.leave();
         }
@@ -68,7 +71,7 @@ class MassiveInstallmentsWizard {
 
         const paymentPromises = activeInstallmentsCollection.map(async (installment) => {
             if (!installment.installmentId) {
-                return; // Salta cuotas sin ID (ej: 'Nueva Cuota')
+                return;
             }
 
             totalAmount += installment?.installmentAmount;

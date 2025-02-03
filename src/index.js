@@ -1,7 +1,7 @@
 import { Telegraf, Scenes, session } from 'telegraf';
 import CustomKeyboard from './class/keyboard.js';
 import INCOME_WIZARD from './scenes/wizard/income.js';
-import EXPENSE_WIZARD from './scenes/wizard/outcome.js';
+import EXPENSE_WIZARD from './scenes/wizard/expense.js';
 import INSTALLMENT_WIZARD from './scenes/wizard/installment.js';
 import TRAVEL_EXPENSE_WIZARD from './scenes/wizard/travel-expense.js';
 import MASSIVE_INSTALLMENTS_WIZARD from './scenes/wizard/massive_installments.js';

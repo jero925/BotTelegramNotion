@@ -1,4 +1,5 @@
-import { Scenes, Markup } from 'telegraf';
+import { BaseWizard } from '../../class/base-wizard.js';
+import { Markup } from 'telegraf';
 import dbOptions from '../../config/databases.js';
 import { MOVEMENT_TYPES, MOVEMENT_IMAGES } from '../../config/movements.js';
 import { retrieveDatabase } from '../../services/notion-service.js';
@@ -9,20 +10,21 @@ import { getActiveInstallments } from '../../services/installment-service.js';
 import { getTodayDate } from '../../utils/dates.js';
 import CustomKeyboard from '../../class/keyboard.js'
 
-class ExpenseWizard {
+class ExpenseWizard extends BaseWizard {
     constructor() {
-        this.scene = new Scenes.WizardScene(
-            'CREATE_NEW_EXPENSE',
-            this.askIfInstallment.bind(this),
-            this.processInstallmentResponse.bind(this),
-            this.processInstallmentIndexOrRedirect.bind(this),
-            this.saveAccountAndRegisterExpense.bind(this),
-            this.saveExpenseNameAndAskForAmount.bind(this),
-            this.saveAmountAndAskForMovementType.bind(this),
-            this.saveMovementTypeAndAskForAccount.bind(this)
-        );
+        const stepDefinitions = [
+            { name: 'ASK_IF_INSTALLMENT', handler: 'askIfInstallment' },
+            { name: 'PROCESS_INSTALLMENT_RESPONSE', handler: 'processInstallmentResponse' },
+            { name: 'PROCESS_INSTALLMENT_INDEX_OR_REDIRECT', handler: 'processInstallmentIndexOrRedirect' },
+            { name: 'SAVE_ACCOUNT_AND_REGISTER_EXPENSE', handler: 'saveAccountAndRegisterExpense' },
+            { name: 'SAVE_EXPENSE_NAME_AND_ASK_FOR_AMOUNT', handler: 'saveExpenseNameAndAskForAmount' },
+            { name: 'SAVE_AMOUNT_AND_ASK_FOR_MOVEMENT_TYPE', handler: 'saveAmountAndAskForMovementType' },
+            { name: 'SAVE_MOVEMENT_TYPE_AND_ASK_FOR_ACCOUNT', handler: 'saveMovementTypeAndAskForAccount' }
+        ];
+        const steps = ExpenseWizard.buildSteps(stepDefinitions);
+        super('CREATE_NEW_EXPENSE', steps);
     }
-
+    
     async askIfInstallment(ctx) {
         ctx.session.expenseStarted = false;
         const inlineOptions = [
@@ -52,16 +54,17 @@ class ExpenseWizard {
             }
 
             ctx.wizard.state.activeInstallmentsCollection = activeInstallmentsCollection;
-            await ctx.reply(`Índices de cuotas activas:\n${activeInstallmentsList}`, Markup.inlineKeyboard([
-                Markup.button.callback('Pago por cuenta', 'accounts')
-            ]));
+            const inlineOptions = [
+                { text: 'Pago por cuenta', callback_data: 'accounts' },
+            ];
+            const inlineKeyboard = CustomKeyboard.generateKeyboardFromOptions(inlineOptions, 2, true);
+            await ctx.reply(`Índices de cuotas activas:\n${activeInstallmentsList}`, inlineKeyboard);
             ctx.wizard.state.movementTypeName = 'Cuota';
             return ctx.wizard.next();
         }
 
-        // Si se eligió "No"
-        await ctx.reply('Por favor, ingresa el nombre del gasto:');
-        return ctx.wizard.selectStep(4);
+        await ctx.reply('Por favor, ingresa el nombre del gasto:');        
+        return ctx.wizard.selectStep(this.steps.SAVE_EXPENSE_NAME_AND_ASK_FOR_AMOUNT);
     }
 
     async processInstallmentIndexOrRedirect(ctx) {
@@ -100,7 +103,7 @@ class ExpenseWizard {
         ctx.wizard.state.paymentAccounts = accountsData;
         await ctx.reply(`Cuentas disponibles:\n${accountsList}`);
         await ctx.reply('¿Con qué cuenta se va a realizar el pago?');
-        return ctx.wizard.selectStep(3);
+        return ctx.wizard.selectStep(this.steps.SAVE_ACCOUNT_AND_REGISTER_EXPENSE);
     }
 
     async saveAccountAndRegisterExpense(ctx) {
@@ -189,7 +192,7 @@ class ExpenseWizard {
         await ctx.reply(`Cuentas:\n${paymentAccounts.accountsList}`);
         await ctx.reply('¿Con qué se paga?');
 
-        return ctx.wizard.selectStep(3);
+        return ctx.wizard.selectStep(this.steps.SAVE_ACCOUNT_AND_REGISTER_EXPENSE);
     }
 
     async getMovementTypes() {

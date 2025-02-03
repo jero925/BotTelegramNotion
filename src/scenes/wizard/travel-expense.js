@@ -1,18 +1,19 @@
-import { Scenes } from 'telegraf';
+import { BaseWizard } from '../../class/base-wizard.js';
 import { createTravelExpense } from '../../services/travel-expense-service.js';
 import { getCurrentTravel, getTravelExpenseTypes, getActualTravelPeople } from '../../services/travel-service.js';
-import CustomKeyboard from '../../class/keyboard.js'
+import CustomKeyboard from '../../class/keyboard.js';
 
-class TravelExpenseWizard {
+class TravelExpenseWizard extends BaseWizard {
     constructor() {
-        this.scene = new Scenes.WizardScene(
-            'CREATE_TRAVEL_EXPENSE',
-            this.askForExpenseName.bind(this),
-            this.saveExpenseNameAndAskForAmount.bind(this),
-            this.saveAmountAndAskForPayer.bind(this),
-            this.savePayerAndAskForExpenseType.bind(this),
-            this.saveExpenseTypeAndCreateExpense.bind(this)
-        );
+        const stepDefinitions = [
+            { name: 'EXPENSE_NAME', handler: 'askForExpenseName' },
+            { name: 'AMOUNT', handler: 'saveExpenseNameAndAskForAmount' },
+            { name: 'PAYER', handler: 'saveAmountAndAskForPayer' },
+            { name: 'EXPENSE_TYPE', handler: 'savePayerAndAskForExpenseType' },
+            { name: 'CREATE_EXPENSE', handler: 'saveExpenseTypeAndCreateExpense' }
+        ];
+        const steps = TravelExpenseWizard.buildSteps(stepDefinitions);
+        super('CREATE_TRAVEL_EXPENSE', steps);
     }
 
     async askForExpenseName(ctx) {

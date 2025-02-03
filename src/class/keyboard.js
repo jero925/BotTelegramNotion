@@ -1,12 +1,10 @@
 
-// Estrategia base para generar teclados
 class KeyboardStrategy {
     generate(options, columns) {
         throw new Error("Method 'generate()' must be implemented");
     }
 }
 
-// Estrategia para generar un reply keyboard
 class ReplyKeyboardStrategy extends KeyboardStrategy {
     generate(options, columns) {
         const keyboard = {
@@ -25,7 +23,6 @@ class ReplyKeyboardStrategy extends KeyboardStrategy {
     }
 }
 
-// Estrategia para generar un inline keyboard
 class InlineKeyboardStrategy extends KeyboardStrategy {
     generate(options, columns) {
         const inlineKeyboard = {
@@ -46,7 +43,6 @@ class InlineKeyboardStrategy extends KeyboardStrategy {
     }
 }
 
-// Clase principal que utiliza el patrón Strategy
 class CustomKeyboard {
     constructor(strategy) {
         this.strategy = strategy;

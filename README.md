@@ -24,6 +24,8 @@ Este bot de Telegram permite gestionar ingresos, gastos y productos en cuotas, i
     MESES_DB_ID=your_meses_database_id_here
     FLUJOPLATA_DB_ID=your_flujoplata_database_id_here
     CUOTAS_DB_ID=your_cuotas_database_id_here
+    VIAJES_DB_ID=your_viajes_database_id_here
+    GASTOS_VIAJES_DB_ID=your_gastos_viajes_database_id_here
     ```
 
    Asegúrate de reemplazar `your_bot_token_here` y las otras IDs de base de datos con tus propias credenciales.

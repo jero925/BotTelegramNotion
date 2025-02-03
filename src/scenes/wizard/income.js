@@ -1,4 +1,4 @@
-import { Scenes } from 'telegraf';
+import { BaseWizard } from '../../class/base-wizard.js';
 import dbOptions from '../../config/databases.js';
 import { MOVEMENT_TYPES, MOVEMENT_IMAGES } from '../../config/movements.js';
 import { retrieveDatabase } from '../../services/notion-service.js';
@@ -7,16 +7,40 @@ import { getPaymentAccounts } from '../../services/account-service.js';
 import { createNewMovement } from '../../services/movement-service.js';
 import { getTodayDate } from '../../utils/dates.js';
 
-class IncomeWizard {
+const STEPS = {
+    INCOME_NAME: {
+        step: 0,
+        handler: 'askForIncomeName'
+    },
+    AMOUNT: {
+        step: 1,
+        handler: 'saveIncomeNameAndAskForAmount'
+    },
+    MOVEMENT_TYPE: {
+        step: 2,
+        handler: 'saveAmountAndAskForMovementType'
+    },
+    ACCOUNT: {
+        step: 3,
+        handler: 'saveMovementTypeAndAskForAccount'
+    },
+    REGISTER_INCOME: {
+        step: 4,
+        handler: 'saveAccountAndRegisterIncome'
+    }
+};
+
+class IncomeWizard extends BaseWizard {
     constructor() {
-        this.scene = new Scenes.WizardScene(
-            'CREATE_NEW_INCOME',
-            this.askForIncomeName.bind(this),
-            this.saveIncomeNameAndAskForAmount.bind(this),
-            this.saveAmountAndAskForMovementType.bind(this),
-            this.saveMovementTypeAndAskForAccount.bind(this),
-            this.saveAccountAndRegisterIncome.bind(this)
-        );
+        const stepDefinitions = [
+            { name: 'INCOME_NAME', handler: 'askForIncomeName' },
+            { name: 'AMOUNT', handler: 'saveIncomeNameAndAskForAmount' },
+            { name: 'MOVEMENT_TYPE', handler: 'saveAmountAndAskForMovementType' },
+            { name: 'ACCOUNT', handler: 'saveMovementTypeAndAskForAccount' },
+            { name: 'REGISTER_INCOME', handler: 'saveAccountAndRegisterIncome' }
+        ];
+        const steps = IncomeWizard.buildSteps(stepDefinitions);
+        super('CREATE_NEW_INCOME', STEPS);
     }
 
     async askForIncomeName(ctx) {
@@ -38,7 +62,6 @@ class IncomeWizard {
     }
 
     async saveAmountAndAskForMovementType(ctx) {
-        
         const amount = parseFloat(ctx.message.text);
 
         if (isNaN(amount) || amount <= 0) {
@@ -115,18 +138,16 @@ class IncomeWizard {
 
     async getMovementTypes() {
         const databaseId = dbOptions.dbFlujoPlata;
-        
         const response = await retrieveDatabase(databaseId, {});
-        let i = 0
-        return response.properties.Tipo.multi_select.options.map(result => ({
-            indes: i += 1,
+        return response.properties.Tipo.multi_select.options.map((result, index) => ({
+            index: index + 1,
             id: result.id,
             name: result.name
         }));
     }
 
     formatMovementTypes(movementTypes) {
-        return movementTypes.map((type, index) => `${index + 1} - ${type.name}`).join('\n');
+        return movementTypes.map((type) => `${type.index} - ${type.name}`).join('\n');
     }
 }
 
