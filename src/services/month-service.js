@@ -17,8 +17,8 @@ export async function getPreviousMonth() {
     return previousMonth.results[0];
 }
 
-export async function getMonthsInDateRange(databaseId, startDate, endDate) {
-    const response = await queryDatabase(databaseId, {
+export async function getMonthsInDateRange(startDate, endDate) {
+    const response = await queryDatabase(dbOptions.dbMeses, {
         and: [
             { property: "Date", date: { on_or_after: startDate } },
             { property: "Date", date: { on_or_before: endDate } }

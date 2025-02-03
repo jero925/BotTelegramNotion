@@ -1,3 +1,4 @@
+import { propertyId } from 'notion-helper';
 import { NotionPageFactory } from '../class/notion-page-factory.js';
 import dbOptions from '../config/databases.js';
 import { queryDatabase } from './notion-service.js';
@@ -35,9 +36,13 @@ export async function getActiveInstallments(filter) {
     ];
 
     if (filter) filters.push(filter);
+    
+    const order = [
+        { property: "Fecha de compra", direction: "ascending" }
+    ]
 
-    const activeInstallments = await queryDatabase(dbOptions.dbCuotas, { and: filters });
-
+    const activeInstallments = await queryDatabase(dbOptions.dbCuotas, { and: filters }, order);
+    
     let activeInstallmentsCollection = [];
 
     const initialInstallment = {
@@ -57,8 +62,6 @@ export async function getActiveInstallments(filter) {
     }));
 
     activeInstallmentsCollection = activeInstallmentsCollection.concat(newInstallments);
-
-    // activeInstallmentsCollection.sort((a, b) => new Date(a.purchaseDate) - new Date(b.purchaseDate));
 
     const activeInstallmentsList = activeInstallmentsCollection.map((installment) => {
         let installmentText = `${installment.installmentIndex} - ${installment.installmentName}`;

@@ -72,11 +72,11 @@ class InstallmentWizard extends BaseWizard {
             await ctx.reply('Índice de tarjeta inválido. Por favor, elige una tarjeta válida.');
             return ctx.scene.leave();
         }
-
+        
         const WizardState = ctx.wizard.state;
-        const todayDate = await getTodayDate();
-        const firstInstallmentDate = await getFirstDayOfNextMonth(todayDate, 1);
-        const lastInstallmentDate = await getFirstDayOfNextMonth(todayDate, WizardState.installmentCount);
+        const todayDate = getTodayDate();
+        const firstInstallmentDate = getFirstDayOfNextMonth(todayDate, 1);
+        const lastInstallmentDate = getFirstDayOfNextMonth(todayDate, parseInt(WizardState.installmentCount));
 
         const installmentData = {
             installmentImage: INSTALLMENT_IMAGE,
@@ -85,7 +85,7 @@ class InstallmentWizard extends BaseWizard {
             amount: WizardState.amount,
             installmentCount: WizardState.installmentCount,
             firstInstallmentDate: firstInstallmentDate,
-            months: await getMonthsInDateRange(dbOptions.dbMeses, firstInstallmentDate, lastInstallmentDate),
+            months: await getMonthsInDateRange(firstInstallmentDate, lastInstallmentDate),
             cardId: WizardState.creditCardsData[cardIndex]?.accountId
         };
 

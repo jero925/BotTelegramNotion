@@ -3,9 +3,9 @@ import dbOptions from '../config/databases.js';
 
 const notion = new Client({ auth: dbOptions.apiKeyNotion });
 
-export async function queryDatabase(databaseId, filter) {
+export async function queryDatabase(databaseId, filter, sorts) {
     try {
-        return await notion.databases.query({ database_id: databaseId, filter });
+        return await notion.databases.query({ database_id: databaseId, filter, sorts });
     } catch (error) {
         console.error(`Error al consultar la base de datos ${databaseId}:`, error.message);
         throw error;
