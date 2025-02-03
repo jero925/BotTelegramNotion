@@ -5,6 +5,7 @@ import EXPENSE_WIZARD from './scenes/wizard/expense.js';
 import INSTALLMENT_WIZARD from './scenes/wizard/installment.js';
 import TRAVEL_EXPENSE_WIZARD from './scenes/wizard/travel-expense.js';
 import MASSIVE_INSTALLMENTS_WIZARD from './scenes/wizard/massive_installments.js';
+import SUBSCRIPTION_WIZARD from './scenes/wizard/subscription.js';
 
 const { Stage } = Scenes;
 
@@ -15,6 +16,7 @@ const COMMANDS = {
     EXPENSE: 'gasto',
     INCOME: 'ingreso',
     INSTALLMENT: 'cuotas',
+    SUBSCRIPTION: 'suscripcion',
     TRAVEL: 'viaje',
     HELP: 'help'
 };
@@ -23,7 +25,8 @@ const WIZARD_SCENES = {
     INCOME: 'CREATE_NEW_INCOME',
     INSTALLMENT: 'CREATE_NEW_INSTALLMENT',
     TRAVEL_EXPENSE: 'CREATE_TRAVEL_EXPENSE',
-    MASSIVE_INSTALLMENTS: 'MASSIVE_INSTALLMENTS'
+    MASSIVE_INSTALLMENTS: 'MASSIVE_INSTALLMENTS',
+    SUBSCRIPTION: 'SUBSCRIPTION'
 };
 
 // Define the bot's custom commands
@@ -32,7 +35,8 @@ const BOT_COMMANDS = [
     { command: COMMANDS.INCOME, description: 'Register a new income' },
     { command: COMMANDS.INSTALLMENT, description: 'Register a new installment' },
     { command: COMMANDS.TRAVEL, description: 'Register a travel expense' },
-    { command: COMMANDS.HELP, description: 'Get help about the bot' }
+    { command: COMMANDS.HELP, description: 'Get help about the bot' },
+    { command: COMMANDS.SUBSCRIPTION, description: 'Pay or create a subscription' }
 ];
 
 // Create bot instance
@@ -45,7 +49,7 @@ session({
 });
 
 // Scenes configuration
-const WIZARDS = [INCOME_WIZARD, EXPENSE_WIZARD, INSTALLMENT_WIZARD, TRAVEL_EXPENSE_WIZARD, MASSIVE_INSTALLMENTS_WIZARD];
+const WIZARDS = [INCOME_WIZARD, EXPENSE_WIZARD, INSTALLMENT_WIZARD, TRAVEL_EXPENSE_WIZARD, MASSIVE_INSTALLMENTS_WIZARD, SUBSCRIPTION_WIZARD];
 const stage = new Stage(WIZARDS, { sessionName: 'chatSession' });
 
 // Middleware
@@ -66,6 +70,8 @@ bot.command(COMMANDS.EXPENSE, Stage.enter(WIZARD_SCENES.EXPENSE));
 bot.command(COMMANDS.INCOME, Stage.enter(WIZARD_SCENES.INCOME));
 bot.command(COMMANDS.INSTALLMENT, Stage.enter(WIZARD_SCENES.INSTALLMENT));
 bot.command(COMMANDS.TRAVEL, Stage.enter(WIZARD_SCENES.TRAVEL_EXPENSE));
+bot.command(COMMANDS.SUBSCRIPTION, Stage.enter(WIZARD_SCENES.SUBSCRIPTION));
+
 
 // Hears
 bot.hears(START_KEYBOARD_OPTIONS[0], (ctx) => {

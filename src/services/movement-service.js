@@ -11,6 +11,7 @@ export async function createNewMovement(properties) {
         .setDate('Fecha', properties.movimientoFechaActual)
         .setRelation('Producto en cuotas', properties.movimientoCuotaId)
         .setRelation('Cuenta', properties.movimientoCuentaId)
+        .setRelation('Suscripcion', properties.movimientoSubId)
         .setMultiSelect('Tipo', properties.movimientoTipoNombre)
         .setSelect('I/O', properties.movimientoTipoIO)
         .setStatus('Estado Suscripcion', 'No sub')

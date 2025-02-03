@@ -10,7 +10,8 @@ const REQUIRED_ENV_VARS = [
     'FLUJOPLATA_DB_ID',
     'CUOTAS_DB_ID',
     'VIAJES_DB_ID',
-    'GASTOS_VIAJES_DB_ID'
+    'GASTOS_VIAJES_DB_ID',
+    'SUBSCRIPTIONS_DB_ID'
 ];
 
 // Validate that all required environment variables are defined
@@ -30,6 +31,7 @@ const dbOptions = {
     dbCuotas: process.env.CUOTAS_DB_ID,
     dbViaje: process.env.VIAJES_DB_ID,
     dbGastosViaje: process.env.GASTOS_VIAJES_DB_ID,
+    subscriptions: process.env.SUBSCRIPTIONS_DB_ID
 };
 
 export default dbOptions;
