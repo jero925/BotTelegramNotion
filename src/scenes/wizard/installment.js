@@ -1,8 +1,7 @@
 import { BaseWizard } from '../../class/base-wizard.js';
-import dbOptions from '../../config/databases.js';
 import { INSTALLMENT_IMAGE } from '../../config/movements.js';
 import { getMonthsInDateRange } from '../../services/month-service.js';
-import { createNewInstallment } from '../../services/installment-service.js';
+import { createNewInstallment, getNextMonthTotal } from '../../services/installment-service.js';
 import { getTodayDate, getFirstDayOfNextMonth } from '../../utils/dates.js';
 import { getCreditCardList } from '../../services/account-service.js';
 
@@ -92,6 +91,9 @@ class InstallmentWizard extends BaseWizard {
         await createNewInstallment(installmentData);
         await ctx.reply('Producto en cuotas agregado exitosamente.');
 
+        const totalNextMonth = await getNextMonthTotal()
+        if (totalNextMonth) { await ctx.reply(`Resumen del mes siguiente: $${totalNextMonth}`) }
+        
         return ctx.scene.leave();
     }
 }
