@@ -1,5 +1,4 @@
 import { BaseWizard } from '../../class/base-wizard.js';
-import { Markup } from 'telegraf';
 import dbOptions from '../../config/databases.js';
 import { MOVEMENT_TYPES, MOVEMENT_IMAGES } from '../../config/movements.js';
 import { retrieveDatabase } from '../../services/notion-service.js';
@@ -12,6 +11,8 @@ import CustomKeyboard from '../../class/keyboard.js'
 
 class ExpenseWizard extends BaseWizard {
     constructor() {
+        console.log('Entering Expense wizard...');
+        
         const stepDefinitions = [
             { name: 'ASK_IF_INSTALLMENT', handler: 'askIfInstallment' },
             { name: 'PROCESS_INSTALLMENT_RESPONSE', handler: 'processInstallmentResponse' },
