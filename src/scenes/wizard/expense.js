@@ -10,9 +10,7 @@ import { getTodayDate } from '../../utils/dates.js';
 import CustomKeyboard from '../../class/keyboard.js'
 
 class ExpenseWizard extends BaseWizard {
-    constructor() {
-        console.log('Entering Expense wizard...');
-        
+    constructor() {        
         const stepDefinitions = [
             { name: 'ASK_IF_INSTALLMENT', handler: 'askIfInstallment' },
             { name: 'PROCESS_INSTALLMENT_RESPONSE', handler: 'processInstallmentResponse' },
@@ -27,6 +25,7 @@ class ExpenseWizard extends BaseWizard {
     }
     
     async askIfInstallment(ctx) {
+        console.log('Entering Expense wizard...');
         ctx.session.expenseStarted = false;
         const inlineOptions = [
             { text: 'Si', callback_data: 'yes' },
