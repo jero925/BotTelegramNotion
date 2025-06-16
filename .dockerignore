@@ -1,0 +1,14 @@
+# Dependencias
+node_modules
+npm-debug.log
+yarn-error.log
+
+# Configuraciones locales
+.env
+.vscode
+
+# Otros archivos innecesarios
+Dockerfile
+To-Do.md
+*.test.js
+*.tgz

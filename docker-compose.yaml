@@ -1,0 +1,10 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bottelegram
+    volumes:
+      - .:/app
+      - /app/node_modules
+    # restart: unless-stopped
